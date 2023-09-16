@@ -1,0 +1,319 @@
+\documentclass{book}
+
+\usepackage[textwidth=17cm]{geometry}
+
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage{amsmath,amssymb}
+
+\usepackage{graphicx}
+\usepackage{psfrag}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{verbatim}
+
+\usepackage{minted}		% Coloration syntaxique
+\usepackage[T1]{fontenc}	% Style de ~ incorrect
+\usepackage{lmodern}		% Style de ~ incorrect
+%\usemintedstyle{upsud}
+\newcommand{\inline}[1]{\mintinline[breaklines]{c++}{#1}}
+
+% Meilleures couleurs
+\usepackage{xcolor}
+\definecolor{red}{RGB}{221,42,43}
+\definecolor{green}{RGB}{132,184,24}
+\definecolor{blue}{RGB}{0,72,112}
+\definecolor{orange}{RGB}{192,128,64}
+\definecolor{gray}{RGB}{107,108,110}
+
+\usepackage[onehalfspacing]{setspace}
+\setstretch{1.02}
+
+% Solutions encadrées
+\usepackage{tikz}
+\usepackage[framemethod=tikz]{mdframed}
+\newmdenv[
+  singleextra={
+    \fill[blue] (P) rectangle ([xshift=-15pt]P|-O);
+    \node[overlay,anchor=south east,rotate=90,font=\color{white}] at (P) {\sf\textbf{Correction}};
+  },
+  firstextra={
+    \fill[blue] (P) rectangle ([xshift=-15pt]P|-O);
+    \node[overlay,anchor=south east,rotate=90,font=\color{white}] at (P) {\sf\textbf{Correction}};
+  },
+  secondextra={
+    \fill[blue] (P) rectangle ([xshift=-15pt]P|-O);
+    \node[overlay,anchor=south east,rotate=90,font=\color{white}] at (P) {\sf\textbf{Correction}};
+  },
+  backgroundcolor=blue!2,
+  linecolor=blue,
+  skipabove=12pt,
+  skipbelow=12pt,
+  innertopmargin=0.4em,
+  innerbottommargin=0.4em,
+  innerrightmargin=2.7em,
+  rightmargin=0.7em,
+  innerleftmargin=1.7em,
+  leftmargin=0.7em,
+]{correction}
+
+% Pour cacher/montrer les solutions, décommenter/commenter les 3 lignes ci-dessous
+\usepackage{comment}
+% \renewenvironment{correction}{}{}
+% \excludecomment{correction}
+
+% Fancy chapters
+\makeatletter
+  \renewcommand{\@chapapp}{TD}
+\makeatother
+
+\usepackage{fancyhdr}
+\usepackage{fncychap}
+  \ChTitleVar{\Huge\bfseries\sffamily\color{blue}}
+  \ChNameVar{\raggedleft\fontsize{22}{16}\selectfont\sffamily\color{blue}}
+  \ChNumVar{\raggedleft\fontsize{60}{62}\selectfont\sffamily\color{blue}}
+
+% Fancy sections
+\usepackage{titlesec}
+\titlespacing*{\chapter}{0pt}{-50pt}{40pt}
+\titleformat{\section}[block]
+  {\Large\bfseries\sffamily\color{blue}}
+  {\thesection}
+  {1em}
+  {}
+
+\newmdenv[nobreak,backgroundcolor=red!20,roundcorner=10pt,linecolor=white]{warning}
+
+\newenvironment{prompt}{\begin{quote}\color{blue!75}\tt\$\,
+}{\end{quote}}
+
+\newcommand{\cc}{\mbox{C}}
+\newcommand{\cpp}{\mbox{C\vspace{.5em}\protect\raisebox{.2ex}{\footnotesize++~}}}
+
+\def\filename{\emph}
+
+\newcommand{\ham}{\mathcal{H}}
+\newcommand{\en}{\mathrm{E}}
+\newcommand{\ket}[1]{\left\vert#1\right\rangle}
+\newcommand{\bra}[1]{\left\langle#1\right\vert}
+\newcommand{\ps}[2]{\left\langle#1\middle\vert#2\right\rangle}
+\newcommand{\psop}[3]{\left\langle#1\middle\vert#2\middle\vert#3\right\rangle}
+\newcommand{\com}[2]{\left[#1,#2\right]}
+\newcommand{\avg}[1]{\left<#1\right>}
+\newcommand{\abs}[1]{\left|#1\right|}
+
+
+\newcommand{\diff}{\mathrm{d}}
+\newcommand{\ud}{\,\mathrm{d}}
+\newcommand{\Tr}{\mathrm{Tr}\,}
+\newcommand{\tr}{\mathrm{tr}\,}
+\newcommand{\im}{\mathrm{Im}\,}
+\newcommand{\re}{\mathrm{Re}\,}
+\newcommand{\nn}{\nonumber}
+\newcommand{\be}{\begin{equation}}
+\newcommand{\ee}{\end{equation}}
+\newcommand{\ba}{\begin{eqnarray}}
+\newcommand{\ea}{\end{eqnarray}}
+
+\renewcommand{\l}{\left}
+\renewcommand{\r}{\right}
+
+\graphicspath{{Figures/}}
+
+\usepackage{hyperref}
+
+\begin{document}
+
+  \setcounter{chapter}{4}
+\chapter{Héritage \& Nombres aléatoires}
+
+Ce TD introduit la notion d'héritage, et permet de découvrir le fichier d'en tête lié aux nombres aléatoires de la librairie standard, \inline{random}. 
+
+\section{Classe abstraite}
+
+Nous souhaitons disposer de générateurs de nombres complexes aléatoires suivants des distributions différentes (uniforme, gaussienne, etc) et dont on peut initialiser la graine. La graine (et son initialisation) est une propriété commune à tous les génerateurs de nombres aléatoires, en revanche le type de distribution suivie par les nombres générés est spécifique au générateur utilisé. Nous pouvons, dans ce cas, mettre à profit le concept d'héritage en \cpp. Une classe \inline{NombreComplexeAleatoire} constituera un générateur de nombres complexes aléatoires (généralisation) et des classes dérivées constitueront des générateurs de nombres complexes aléatoires spécifiques \inline{NombreComplexeUniforme} et \inline{NombreComplexeGaussien} (spécialisations).
+
+En pratique, il s'agit de créer une classe abstraite \inline{NombreComplexeAleatoire} définissant plusieurs méthodes : une méthode virtuelle \inline{virtual void initialise()} dont le comportement par défaut est de ne rien faire et une méthode abstraite \inline{virtual Complexe valeur() const = 0}. On ajoutera aussi un attribut \inline{unsigned int p_graine} et les deux fonctions publiques \emph{getter} et \emph{setter} associées. Il est rappelé que toute classe ayant au moins une méthode virtuelle \emph{doit} déclarer un destructeur virtuel.
+
+Ainsi, nous pourrons créer autant de classes filles que nous le souhaitons, pouvant ainsi implémenter plusieurs distributions aléatoires différentes.
+
+\begin{correction}
+Dans un nouveau fichier \filename{nombrecomplexealeatoire.h}, après avoir écrit le \emph{header guard} et inclut \mintinline[breaklines]{c++}{#include "complexe.h"}, on définit notre classe 
+\begin{minted}[breaklines]{c++}
+class NombreComplexeAleatoire
+{
+public:
+  NombreComplexeAleatoire();
+  virtual ~NombreComplexeAleatoire();
+
+  void setGraine(int graine);
+  int graine() const;
+  
+  virtual void initialise();
+  virtual Complexe valeur() const = 0;
+  
+protected:
+  unsigned int p_graine;
+};
+\end{minted}
+
+La définition dans le fichier \emph{*cpp} associé est simple
+\begin{minted}[breaklines]{c++}
+NombreComplexeAleatoire::NombreComplexeAleatoire()
+{
+  p_graine = 0;
+}
+
+NombreComplexeAleatoire::~NombreComplexeAleatoire()
+{
+}
+
+void NombreComplexeAleatoire::setGraine(int graine)
+{
+  p_graine = graine;
+}
+
+int NombreComplexeAleatoire::graine() const
+{
+  return p_graine;
+ }
+
+void NombreComplexeAleatoire::initialise()
+{
+}
+\end{minted}
+\end{correction}
+
+\section{Une distribution uniforme}
+Dériver la classe \inline{NombreComplexeAleatoire} en une classe \inline{NombreComplexeUniforme} qui retourne une nombre complexe dans le carré du plan complexe de diagonale $-a(1+i) \to a(1+i)$. On pourra spécifier le mot-clé \inline{override} (par exemple \inline{Complexe valeur() const override}) pour préciser au compilateur que nous sommes en train de redéfinir une méthode virtuelle (ainsi, si on se trompe dans la signature, par exemple en écrivant une typo dans le nom de la méthode ou en oubliant le mot-clé \inline{const} (quand il y a lieu), le compilateur retourne une erreur - on est ainsi sûr qu'une méthode déclarée \inline{override} a l'effet escompté). Le générateur de nombres aléatoires ainsi implémenté permet d'obtenir des séries des nombres complexes aléatoires distribués uniformément dont :
+\begin{itemize}
+\item les parties réelles sont distribuées uniformément entre $-a \to a$ ;
+\item les parties imaginaires sont distribuées uniformément entre $-a \to a$ ;
+\end{itemize}
+Dans la méthode \inline{Complexe valeur() const}, on utilisera la fonction \inline{rand()} comme générateur de nombres distribués uniformément (bibliothèque \inline{<cstdlib>}) et dans la méthode \inline{void initialise()}, on utilisera la fonction \inline{srand(unsigned int)} pour l'initialisation de la graine.
+
+
+\begin{correction}
+Une classe dérivée se définit via
+\begin{minted}[breaklines]{c++}
+class NombreComplexeUniforme : public NombreComplexeAleatoire
+\end{minted}
+Cette déclaration signifie que tous les membres publics de \inline{NombreComplexeAleatoire} sont des membres publics de \inline{NombreComplexeUniforme}. Les membres privés de \inline{NombreComplexeAleatoire} sont quant à eux inaccessibles (aussi bien à l'intérieur qu'à l'extérieur de \inline{NombreComplexeUniforme}. Si on avait souhaité que les membres de \inline{NombreComplexeAleatoire} non-accessibles de l'extérieur soit accessibles pour \inline{NombreComplexeUniforme}, il aurait fallu les déclarer en tant que \inline{protected} et non \inline{private}. (\inline{protected} signifie : ``inaccessible de l'extérieur, mais accessible de manière privée dans les classes filles'')
+
+Pour le corps de la classe, il faut déclarer un constructeur qui prendra en argument un \inline{double}. Nous marquons aussi les fonctions redéfinies comme \inline{override}.
+\begin{minted}[breaklines]{c++}
+{
+public:
+  NombreComplexeUniforme(double a);
+  ~NombreComplexeUniforme();
+  
+  void initialise() override;
+  Complexe valeur() const override;
+private :
+  double p_a;
+};
+\end{minted}
+Une classe dérivée doit faire appel au constructeur de la classe de base dans son constructeur, donc la définition du constructeur de \inline{NombreComplexeUniforme} doit faire appel au constructeur de \inline{NombreComplexeAleatoire}.
+\begin{minted}[breaklines]{c++}
+NombreComplexeUniforme::NombreComplexeUniforme(double a)
+  : NombreComplexeAleatoire()
+{
+  p_a = a;
+}
+\end{minted}
+Le destructeur est en réalité non-nécessaire (c'est à dire que la définition par défaut, qui ne fait rien, est valide), mais nous l'avons déclaré donc nous devons le définir.
+\begin{minted}[breaklines]{c++}
+NombreComplexeUniforme::~NombreComplexeUniforme()
+{}
+\end{minted}
+
+Il ne reste plus qu'à définir le comportement de \inline{initialise} et de \inline{valeur}. Comme nous allons utiliser \inline{rand} la libraire \href{http://en.cppreference.com/w/cpp/numeric/random/rand}{\inline{<cstdlib>}}, \inline{initialise} doit faire appel à \inline{srand} pour choisir la graine aléatoire.
+\begin{minted}[breaklines]{c++}
+void NombreComplexeUniforme::initialise()
+{
+  srand(graine());
+}
+\end{minted}
+Pour réaliser un tirage aléatoire uniforme dans $[-a;a]$ avec \inline{rand}, nous avons besoin d'utiliser \inline{RAND_MAX}, la plus grande valeur que peut retourner \inline{rand}.
+\begin{minted}[breaklines]{c++}
+Complexe NombreComplexeUniforme::valeur() const
+{
+  Complexe nombre;
+  
+  nombre.real((double(rand()) / double(RAND_MAX) - 0.5) * 2.0 * p_a);
+  nombre.imag((double(rand()) / double(RAND_MAX) - 0.5) * 2.0 * p_a);
+
+  return nombre;
+}
+\end{minted}
+\end{correction}
+
+\renewenvironment{correction}{}{}
+\excludecomment{correction}
+
+\section{Une distribution gaussienne}
+
+Une autre distribution de nombre aléatoire utile est la distribution gaussienne. L'objectif, ici, est d'avoir à disposition, via une classe, un générateur aléatoire de nombres complexes gaussien. Ainsi en utilisant ce générateur, on souhaite pouvoir obtenir une série de nombres complexes dont
+\begin{itemize}
+\item les parties réelles sont distribuées selon une loi gaussienne de moyenne moy\_re et de variance var\_re ;
+\item les parties imaginaires sont distribuées selon une loi gaussienne de moyenne moy\_im et de variance var\_im ;
+\item la moyenne est un nombre complexe et moy\_re peut être différent de moy\_im ;
+\item la variance est un nombre réél (type \inline{double}) et var\_re = var\_im.
+\end{itemize}
+
+Déclarer une classe nommée \inline{NombreComplexeGaussien}, et l'implémenter. On aura au moins un constructeur permettant d'assigner une valeur à la moyenne (complexe) et à la variance (réelle) de la distribution gaussienne. On pourra utiliser \inline{std::normal_distribution<double>} de la bibliothèque \href{http://en.cppreference.com/w/cpp/header/random}{\inline{<random>}}, couplée a un générateur de nombre aléatoire tel que \inline{std::mt19937}. Les deux classes  \inline{std::normal_distribution<>} et \inline{std::mt19937} faisant partie de la STL, on pourra consulter cette dernière pour connaitre les attributs et les méthodes de ces classes et visualiser un exemple d'implémentation. Il faudra faire attention à déclarer le générateur de nombre aléatoire et la distribution gaussienne en tant que membres \inline{mutable}. 
+
+(Pourquoi ? Les générateurs de nombre aléatoire sont en général implémentés comme des suites avec une relation de récurrence du type $u_{n+p+1} = f(u_n, ... u_{n+p})$ ; ils possèdent donc un état interne (les valeurs $u_n, ..., u_{n+p}$) qui est modifié lors de la génération d'un nombre aléatoire. Or nous avons déclaré \inline{valeur()} comme \inline{const} puisque cette méthode ne ``modifie'' pas notre objet (contrairement à \inline{setGraine} ou \inline{initialise}), donc nous devons déclarer le générateur de nombre aléatoire comme \inline{mutable} afin qu'il puisse modifier son état interne ; et au vu de l'implémentation de la \inline{std}, nous devons aussi déclarer la distribution gaussienne comme \inline{mutable}). 
+
+\begin{correction}
+On prend soin d'ajouter \mintinline[breaklines]{c++}{#include <random>} et \inline{using namespace std;} là où c'est nécessaire. Une implémentation valide est :
+\begin{minted}[breaklines]{c++}
+NombreComplexeGaussien::NombreComplexeGaussien(Complexe moyenne, double variance)
+  : NombreComplexeAleatoire(), 
+    p_moyenne(moyenne),
+    p_engine(), 
+    p_distribution(0, variance) 
+{}
+\end{minted}
+Nous aurions également pu choisir d'avoir une variance différente pour l'axe réel et pour l'axe imaginaire.
+
+Pour l'implémentation des autres méthodes, nous devons faire appel à la méthode \inline{seed} de la classe \mintinline[breaklines]{c++}{std::normal_distribution<double>} et à l'opérateur \inline{operator()(std::random_engine engine)} qui sert à générer un nouveau nombre aléatoire.
+\begin{minted}[breaklines]{c++}
+void NombreComplexeGaussien::initialise()
+{
+  p_engine.seed(graine());
+}
+
+Complexe NombreComplexeGaussien::valeur() const
+{
+  Complexe result;
+
+  result.real(p_moyenne.real() + p_distribution(p_engine));
+  result.imag(p_moyenen.imag() + p_distribution(p_engine));
+
+  return result;
+}
+\end{minted}
+où \inline{p_moyenne}, \inline{p_distribution} et \inline{p_engine} sont trois membres privés déclarés de la manière suivante :
+\begin{minted}[breaklines]{c++}
+class NombreComplexeGaussien : public NombreComplexeAleatoire
+{
+public:
+   NombreComplexeGaussien(Complexe moyenne, double variance);
+  ~NombreComplexeGaussien();
+  void initialise() override;
+  Complexe valeur() const override;
+  
+private:
+  Complexe p_moyenne;
+  // Générateur de nombre aléatoire de type Mersenne twister
+  mutable std::mt19937 p_engine; 
+  // Transforme le résultat d'un générateur de nombre aléatoire uniforme en une distribution gaussienne
+  mutable std::normal_distribution<double> p_distribution; 
+};
+\end{minted}
+\end{correction}
+
+
+
+\end{document}

@@ -1,0 +1,861 @@
+\documentclass{book}
+
+\usepackage[textwidth=17cm]{geometry}
+
+\setlength{\parindent}{0cm}
+
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage{amsmath,amssymb}
+
+\usepackage{graphicx}
+\usepackage{psfrag}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{verbatim}
+
+\usepackage{minted}		% Coloration syntaxique
+\usepackage[T1]{fontenc}	% Style de ~ incorrect
+\usepackage{lmodern}		% Style de ~ incorrect
+%\usemintedstyle{upsud}
+\newcommand{\inline}[1]{\mintinline[breaklines]{c++}{#1}}
+
+% Meilleures couleurs
+\usepackage{xcolor}
+\definecolor{red}{RGB}{221,42,43}
+\definecolor{green}{RGB}{132,184,24}
+\definecolor{blue}{RGB}{0,72,112}
+\definecolor{orange}{RGB}{192,128,64}
+\definecolor{gray}{RGB}{107,108,110}
+
+\usepackage[onehalfspacing]{setspace}
+\setstretch{1.02}
+
+% Solutions encadrées
+\usepackage{tikz}
+\usepackage[framemethod=tikz]{mdframed}
+\newmdenv[
+  singleextra={
+    \fill[blue] (P) rectangle ([xshift=-15pt]P|-O);
+    \node[overlay,anchor=south east,rotate=90,font=\color{white}] at (P) {\sf\textbf{Correction}};
+  },
+  firstextra={
+    \fill[blue] (P) rectangle ([xshift=-15pt]P|-O);
+    \node[overlay,anchor=south east,rotate=90,font=\color{white}] at (P) {\sf\textbf{Correction}};
+  },
+  secondextra={
+    \fill[blue] (P) rectangle ([xshift=-15pt]P|-O);
+    \node[overlay,anchor=south east,rotate=90,font=\color{white}] at (P) {\sf\textbf{Correction}};
+  },
+  backgroundcolor=blue!2,
+  linecolor=blue,
+  skipabove=12pt,
+  skipbelow=12pt,
+  innertopmargin=0.4em,
+  innerbottommargin=0.4em,
+  innerrightmargin=2.7em,
+  rightmargin=0.7em,
+  innerleftmargin=1.7em,
+  leftmargin=0.7em,
+]{correction}
+
+\usepackage{comment}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Pour cacher/montrer les solutions, décommenter/commenter les 3 lignes ci-dessous
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \renewenvironment{correction}{}{}
+% \excludecomment{correction}
+
+% Fancy chapters
+\makeatletter
+  \renewcommand{\@chapapp}{TD}
+\makeatother
+
+\usepackage{fancyhdr}
+\usepackage{fncychap}
+  \ChTitleVar{\Huge\bfseries\sffamily\color{blue}}
+  \ChNameVar{\raggedleft\fontsize{22}{16}\selectfont\sffamily\color{blue}}
+  \ChNumVar{\raggedleft\fontsize{60}{62}\selectfont\sffamily\color{blue}}
+
+% Fancy sections
+\usepackage{titlesec}
+\titlespacing*{\chapter}{0pt}{-50pt}{40pt}
+\titleformat{\section}[block]
+  {\Large\bfseries\sffamily\color{blue}}
+  {\thesection}
+  {1em}
+  {}
+
+\newmdenv[nobreak,backgroundcolor=red!20,roundcorner=10pt,linecolor=white]{warning}
+
+\newenvironment{prompt}{\begin{quote}\color{blue!75}\tt\$\,
+}{\end{quote}}
+
+\newcommand{\cc}{\mbox{C}}
+\newcommand{\cpp}{\mbox{C\vspace{.5em}\protect\raisebox{.2ex}{\footnotesize++~}}}
+
+\def\filename{\emph}
+
+\newcommand{\ham}{\mathcal{H}}
+\newcommand{\en}{\mathrm{E}}
+\newcommand{\ket}[1]{\left\vert#1\right\rangle}
+\newcommand{\bra}[1]{\left\langle#1\right\vert}
+\newcommand{\ps}[2]{\left\langle#1\middle\vert#2\right\rangle}
+\newcommand{\psop}[3]{\left\langle#1\middle\vert#2\middle\vert#3\right\rangle}
+\newcommand{\com}[2]{\left[#1,#2\right]}
+\newcommand{\avg}[1]{\left<#1\right>}
+\newcommand{\abs}[1]{\left|#1\right|}
+
+
+\newcommand{\diff}{\mathrm{d}}
+\newcommand{\ud}{\,\mathrm{d}}
+\newcommand{\Tr}{\mathrm{Tr}\,}
+\newcommand{\tr}{\mathrm{tr}\,}
+\newcommand{\im}{\mathrm{Im}\,}
+\newcommand{\re}{\mathrm{Re}\,}
+\newcommand{\nn}{\nonumber}
+\newcommand{\be}{\begin{equation}}
+\newcommand{\ee}{\end{equation}}
+\newcommand{\ba}{\begin{eqnarray}}
+\newcommand{\ea}{\end{eqnarray}}
+
+\renewcommand{\l}{\left}
+\renewcommand{\r}{\right}
+
+\graphicspath{{Figures/}}
+
+\usepackage{hyperref}
+
+\begin{document}
+
+  
+\chapter{Fonctions, Pointeurs, Références et Allocation dynamique}
+
+
+Ce premier TD porte sur des fonctionnalités de base du langage \cpp (et sur leur différence par rapport au \cc), en particulier, il permet de :
+
+\begin{itemize}
+  \item se (re)familiariser avec les espaces de nom (namespace) et avec la bibliothèque \inline{<iostream>} pour afficher des messages dans la console via \inline{std::cout} 
+  \item se familiariser avec la surdéfinition de fonctions
+  \item comprendre la différence entre le passage par valeur et par référence (ou adresse)
+  \item se familiariser avec les opérateurs \inline{new} et \inline{delete[]} du \cpp pour l'allocation dynamique de mémoire
+  \item réviser la construction de la boucle \inline{for}
+  \item se familiariser avec l'utilisation de la \inline{std::vector}
+\end{itemize}
+
+\vspace{1em}
+Commençons par créer un fichier \filename{main.cpp} qui va contenir le code du TD1. Pour l'affichage dans la console, nous avons besoin de \inline{std::cout} qui est défini dans le header \inline{<iostream>} :
+\vspace{-0.5em}
+\begin{minted}[breaklines]{c++}
+#include <iostream>
+\end{minted}
+\vspace{-0.5em}
+Toutes les fonctions et objets de la bibliothèque standard font partie de l'espace de nom (\emph{namespace}) \inline{std}. La directive \inline{using namespace std;} permet d'omettre le préfixe \inline{std::} quand on accède aux fonctions de la libraire standard. On peut alors écrire \inline{cout << "Hello" << endl;} au lieu de \inline{std::cout << "Hello" << std::endl;}
+
+\section{Suite de Fibonacci}
+
+La suite de Fibonacci est une suite d'entiers devant son nom au mathématicien
+italien du XIII\(^{\text{ème}}\) siècle Leonardo Fibonacci qui, dans un problème
+récréatif, décrit la croissance d'une population de lapins en ces termes
+
+\begin{quote}
+\emph{Un homme met un couple de lapins dans un lieu isolé de tous les côtés par un}
+\emph{mur. Combien de couples obtient-on en un an si chaque couple engendre tous les}
+\emph{mois un nouveau couple à compter du troisième mois de son existence ?}
+\end{quote}
+
+Ce problème est à l'origine de la suite dont le \(n\)\(^{\text{ième}}\)( terme
+correspond au nombre de paires de lapins au \(n\)\(^{\text{ième}}\) mois. En
+notant \(\mathcal{F}_n\) le nombre de couples de lapin au début du mois
+\(n\) et en posant \(\mathcal{F}_1=\mathcal{F}_2=1\), Fibonacci déduit
+ainsi la relation de récurrence suivante :
+\begin{align*}
+\mathcal{F}_1 &= 1 \\
+\mathcal{F}_2 &= 1 \\
+...\\
+\mathcal{F}_n &= \mathcal{F}_{n-2}+\mathcal{F}_{n-1}
+\end{align*}
+
+à savoir que le nombre de couples de lapin au mois \(n\) est égal à la
+somme des couples de lapins lors des deux moins précédents.\\
+
+\begin{enumerate}
+\item Écrire une fonction calculant le nombre de Fibonacci au \(n\)\(^{\text{ième}}\) terme, de façon itérative (avec des variables d'état et une boucle). Cette fonction prendra comme argument et utilisera des entiers courts non signé \inline{unsigned short}. Son prototype sera \inline{unsigned short fibonacci(unsigned short)}. Par défaut, cette fontion fournira le nombre de Fibonacci pour \(n=10\).
+
+\item En outre, vous déclarerez une deuxième fonction \inline{fibonacci} prenant comme argument et utilisant des
+entiers non signé \inline{unsigned int}.
+
+\item Tester l'appel de chacune des deux fonctions en changant le type de l'argument fourni (utiliser un \textit{cast}, par exemple \inline{(unsigned short)42}; ou passer des variables de type différent). À partir de quelle valeur numérique de \texttt{n} la valeur retournée diffère-t-elle ? Pourquoi ? Supprimer la version \inline{unsigned short}, qui ne sera plus nécessaire.
+
+\item Au sein du programme principal, réaliser \(N\gg1\) fois le calcul de la fonction
+de Fibonacci et estimer le temps d'exécution nécessaire au programme \emph{via} la
+commande unix \texttt{time ./nom\_executable}.
+
+\item Concevoir et implémenter une fonction \inline{rfibonacci(unsigned int)} proposant une solution récursive au calcul de la suite de Fibonacci. De même, mesurer le temps d'exécution pour la même valeur que \texttt{n}. Pourquoi est-il différent ?
+  
+\item Déporter la fonction récursive \texttt{rfibonacci}, qu'on aura renommée en \texttt{fibonacci}, dans une paire de fichiers : un premier fichier d'en-tête nommé \texttt{fibonacci.h} comprenant la déclaration (prototype) de la fonction et un second fichier source \texttt{fibonacci.cpp}, implémentant cette fonction. Modifier le programme principal afin d'utiliser cette fonction recursive et commenter provisoirement la fonction \texttt{fibonacci} itérative. Compiler et tester l'exécution.
+
+\item Finalement, décommenter la version itérative de \texttt{fibonacci} \emph{i.e.} celle contenue dans le fichier source principal et définie au début de cette exercice. Chercher à résoudre l'erreur de compilation en utilisant un espace de nom \inline{espace_local} et tester le programme en forçant le choix de fonction à utiliser \emph{via} l'opérateur de portée \inline{espace_local::}.
+\end{enumerate}
+
+\begin{correction}
+\subsubsection{Surdéfinition de fonctions}
+Le code ci-dessous implémente deux fonctions, toutes deux nommées \texttt{fibonacci} mais
+dont la déclaration diffère en terme de type d'arguments et de type de valeur
+retournée\footnote{nous évoquerons à la fin de ce cours comment la notion de \emph{template} de
+fonction peut grandement simplifier l'écriture de ces deux fonctions.} :
+
+\begin{minted}[linenos,firstnumber=1,fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+#include <iostream>
+using namespace std;
+
+unsigned short fibonacci(unsigned short n = 10) {
+  if (n <= 2) return 1;
+  unsigned short fn1 = 1, fn2 = 1;
+  unsigned short fn = fn1 + fn2;
+  for (unsigned short i = 2; i < n; i++) {
+    fn = fn1 + fn2;
+    fn1 = fn2;
+    fn2 = fn;
+  }
+  return fn;
+}
+
+unsigned int fibonacci(unsigned int n) {
+  if (n <= 3) return 1;
+  unsigned int fn1 = 1, fn2 = 1;
+  unsigned int fn = fn1 + fn2;
+  for (unsigned int i = 2; i < n; i++) {
+    fn = fn1 + fn2;
+    fn1 = fn2;
+    fn2 = fn;
+  }
+  return fn;
+}
+
+void main() {
+  const unsigned short n = 20;
+  cout << "F(n_defaut) = " << fibonacci() << endl;
+  cout << "F(" << n << ") = " << fibonacci(n) << endl;
+  cout << "F(" << n << ") = " << fibonacci((unsigned int)n) << endl;
+}
+\end{minted}
+
+L'appel à la fonction \texttt{fibonacci} à la ligne 36 convertit, ou \emph{cast}, la valeur de \texttt{n}
+en un entier non signé afin d'explicitement faire appel à la seconde fonction
+\texttt{unsigned int fibonacci(unsigned int)} définie à la ligne 17. Par défaut, seule la
+première des deux fonctions calculent la suite de Fibonacci au terme \(n\) = 10,
+cette valeur étant précisée dans le prototype des fonctions. Il est possible de
+préciser une valeur par défaut pour la seconde fonction mais il y aura alors une
+erreur de compilation lorsque l'utilisateur souhaitera appeler la fonction
+\texttt{fibonacci} sans préciser l'ordre: le compilateur indiquera une ambiguïté dans
+l'appel de la fonction car le contexte d'appel ne lui permettra plus de
+distinguer quelle fonction appeler.
+
+La suite de Fibonacci divergeant rapidement, il est important de noter qu'en
+fonction du type retourné le résultat de ces deux fonctions ne sera plus valide
+à partir d'un certain ordre. Ainsi dès le 25\(^{\text{ème}}\) ordre, celle retournant un \texttt{unsigned short} donnera un résultat erroné ((\(\mathcal{F}_{25}=\)75025) car les valeurs du type \texttt{unsigned short} sont
+comprises entre $0$ et $2^{16}\!-\!1$ \emph{cf.} table \ref{tab:orgtable1}). 
+
+\begin{center}
+\label{tab:orgtable1}
+
+\begin{tabular}{lll}
+\hline
+Type & Taille en mémoire & Intervalle de valeurs\\
+\hline
+int & 4 octets &  -2 147 483 648 à 2 147 483 647\\
+unsigned int & 4 octets & 0 à 4 294 967 295\\
+short & 2 octets & -32 768 à 32 767\\
+unsigned short & 2 octets & 0 à 65 535\\
+%int 4  min=-2147483648  max=2147483647
+%unsigned int 4  min=0  max=4294967295
+%short 2  min=-32768  max=32767
+%unsigned short 2  min=0  max=65535
+\hline
+\end{tabular}
+\end{center}
+\captionof{table}{\textbf{Taille en mémoire et intervalle de valeurs de certains types entiers du C/\cpp}}
+
+\subsubsection{Estimation du temps d'exécution d'un programme}
+
+Afin d'estimer le temps d'exécution de la fonction \texttt{fibonacci}, nous modifions le
+programme principal de telle sorte à réaliser un grand nombre de fois le calcul
+de la suite de Fibonacci.
+
+\begin{minted}[linenos,firstnumber=1,fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+void main() {
+  for (unsigned int i = 0; i < 1000000; i++) {
+    fibonacci(20);
+  }
+}
+\end{minted}
+
+On notera la déclaration de la variable \texttt{i} au sein de la boucle \texttt{for} comme nous y
+autorise le \cpp.
+
+L'objectif ici est uniquement d'utiliser du temps processeur de l'ordinateur
+et d'obtenir une valeur moyenne du temps d'exécution de la fonction
+\texttt{fibonacci}. Pour connaître le temps d'exécution d'une commande Unix, nous
+utilisons le programme \href{https://en.wikipedia.org/wiki/Time_(Unix)}{\texttt{time}} : ainsi, dans le terminal nous exécutons
+successivement les commandes de compilation
+\begin{prompt}
+g++ fibonacci.cc -o fibonacci.exe
+\end{prompt}
+puis d'exécution en préfixant le nom du binaire par la commande \texttt{time}
+\begin{prompt}
+time ./fibonacci.exe\\
+real  0m0.007s\\
+user  0m0.004s\\
+sys   0m0.000s
+\end{prompt}
+On obtient ainsi trois temps qui correspondent respectivement à
+
+\begin{description}
+\item[{\texttt{real}}] est le temps réel d'exécution de la commande \emph{i.e.} l'intervalle de
+temps entre le moment où est lancée la commande et l'instant où le
+programme s'arrête.
+\item[{\texttt{user}}] est le temps pendant lequel la commande utilise le processeur
+indépendamment d'autre processus (navigateur internet, lecture/écriture disque, \ldots{}) s'exécutant sur
+la machine. C'est ce temps (divisé par 1000000) qu'il faut considérer pour estimer le temps d'exécution de la fonction \texttt{fibonacci}.
+\item[{\texttt{sys}}] est le temps pris par le système pour gérer la tâche.
+\end{description}
+
+
+\subsubsection{Fonction récursive \texttt{rfibonacci}}
+
+Une fonction récursive est par définition une fonction qui s'appelle, le risque
+évident étant l'appel infini si les conditions de sortie de la fonction ne sont
+dûment remplies. Dans le cas de l'implémentation d'une suite récursive comme la
+suite de Fibonacci, une fonction récursive est relativement facile à écrire.
+Ainsi, la fonction \texttt{rfibonacci} s'écrit
+
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+unsigned int rfibonacci(unsigned int n) {
+  if (n <= 2) return 1 ;
+  else return rfibonacci(n-2) + rfibonacci(n-1);
+}
+\end{minted}
+
+On note bien que le corps de la fonction \texttt{rfibonacci} réalise deux appels à cette
+même fonction. La condition de sortie se fait dans l'hypothèse où \texttt{n} est
+inférieur à 2 auquel cas la valeur retournée sera 1. On imagine bien qu'à cause du double appel, le temps d'exécution sera exponentiel. En effet, la complexité asymptotique est en $\mathcal{O}(\Phi^n)$, où $\Phi=\frac{\sqrt{5}+1}{2}\approx 1.62$ est le nombre d'or. Alors qu'elle était clairement linéaire ($\mathcal{O}(n^1)$) pour la version itérative.
+
+Il est possible de condenser encore plus l'écriture de cette fonction :
+
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+unsigned int rfibonacci(unsigned int n) {
+  return n <= 2 ? 1 : rfibonacci(n-2) + rfibonacci(n-1);
+}
+\end{minted}
+
+\subsubsection{Compilation séparée}
+
+
+Le fichier d'en-tête nommé \texttt{fibonacci.h} contient la déclaration (prototype) de la fonction
+
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+#ifndef _FIBO_H_
+#define _FIBO_H_
+unsigned int fibonacci(unsigned int n) ; // ici le nom de l'argument est facultatif
+#endif
+\end{minted}
+
+et le fichier source \texttt{fibonacci.cc}, contient la définition de la fonction.
+
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+#include "fibonacci.h"  // inclusion du prototype de la fonction
+unsigned int rfibonacci(unsigned int n) {
+  if (n <= 2) return 1 ;
+  else return rfibonacci(n-2) + rfibonacci(n-1);
+}
+\end{minted}
+
+Pour pouvoir utiliser cette fonction au sein du programme principal, il faut
+donc que le compilateur ait connaissance de la fonction au niveau du bloc \texttt{main}, et de son prototype pour savoir si son utilisation est correctement faite lors de son appel. On doit ainsi inclure de nouveau le fichier \texttt{fibonacci.h}
+dans le fichier contenant le bloc \texttt{main}.
+
+Le programme principal modifié est le suivant (on a supprimé la première fonction
+\texttt{fibonacci} prenant en argument un \texttt{unsigned short}, la deuxième
+fonction \texttt{fibonacci}) :
+
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+#include "fibonacci.h" //inclusion de la fonction recursive
+#include <iostream>
+using namespace std;
+
+//unsigned int fibonacci(unsigned int n) {
+// ...
+//}
+
+void main() {
+  const unsigned int n = 20;
+  cout << "version récursive : F(" << n << ") = " << fibonacci(n) << endl;
+}
+\end{minted}
+
+Pour pouvoir compiler l'ensemble et lier le programme principal à
+l'implémentation de la fonction \texttt{fibonacci} contenu dans le fichier \texttt{fibonacci.cc},
+il faut alors compiler les deux fichiers sources \emph{via} la commande
+\begin{prompt}
+g++ fibonacci.cpp main.cpp -o test.exe
+\end{prompt}
+Note : les fichiers d'en-tête ne doivent \textbf{jamais} figurer en tant que fichier à
+compiler. Cette opération en plus d'être une source éventuelle de problème\footnote{la compilation d'un fichier d'en-tête provoque la création d'un fichier d'extension \texttt{.gch} qui est systématiquement utilisé en lieu et place du fichier d'en-tête. Ainsi, l'utilisateur aura beau procéder à toute une série de changement dans le fichier d'en-tête, ces dernièrs ne seront jamais effectifs car toujours écrantés par le fichier d'extension \texttt{.gch}. Si tel était le cas, il faut alors supprimer ce fichier \texttt{.gch}.} est totalement superflue puisque les fichiers d'en-tête
+sont, par inclusion, présents dans les fichiers sources.
+
+Si l'implémentation de la fonction \texttt{fibonacci} n'est pas amenée à évoluer et ne
+suppose donc pas de recompilation du fichier \texttt{fibonacci.cpp}, on peut alors
+créer le fichier objet (code machine) et ne réaliser que l'opération d'édition de liens. La création d'un fichier
+objet se fait \emph{via} la commande
+\begin{prompt}
+g++ -c fibonacci.cpp
+\end{prompt}
+qui créera un fichier \texttt{fibonacci.o}.
+
+Ensuite, on compile le \texttt{main} et génère l'exécutable en utilisant la commande
+\begin{prompt}
+g++ fibonacci.o main.cpp -o test.exe
+\end{prompt}
+
+
+\subsubsection{Utilisation d'espace de nom}
+Si deux fonctions portent le même nom et que leur contexte d'appel ne permet pas
+au compilateur de les différencier, on peut alors user d'un espace de nom pour
+distinguer chacune d'elle. Ainsi, en supposant que nous souhaitions faire
+cohabiter deux fonctions de calcul de suite de Fibonacci -- la version récursive
+et la première version proposée dans ce TD --, il faut alors encapsuler la
+déclaration et la définition de ces fonctions dans des espaces de nom
+distinct. On pourra ainsi écrire le code suivant
+
+\begin{minted}[linenos,firstnumber=1,fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+#include "fibonacci.h" //inclusion de la fonction recursive
+#include <iostream>
+using namespace std;
+
+namespace espace_local {
+
+  unsigned int fibonacci(unsigned int n) {
+    if (n <= 2) return 1;
+    unsigned int fn1 = 1, fn2 = 1;
+    unsigned int fn = fn1 + fn2;
+    for (unsigned int i = 2; i < n; i++) {
+      fn = fn1 + fn2;
+      fn1 = fn2;
+      fn2 = fn;
+    }
+    return fn;
+  }
+
+}
+
+void main() {
+  const unsigned int n = 20;
+  cout << "version récursive : F(" << n << ") = " << fibonacci(n) << endl;
+  cout << "version locale : F(" << n << ") = " << espace_local::fibonacci(n) << endl;
+}
+\end{minted}
+
+Par défaut, la fonction \texttt{fibonacci} appelée sera la version récursive dont la
+définition est contenue dans le fichier \texttt{fibonacci.cpp}. En revanche, le second
+appel \emph{i.e.} celui prefixé par l'espace de nom \inline{espace_local} se réferera à la version
+``locale'' c'est-à-dire celle encapsulée entre \inline{namespace espace_local {...}}. Cette
+fonctionnalité introduite par le \cpp a surtout pour vocation d'identifier des
+fonctions, classes d'objet ayant des propriétés communes tels qu'un ensemble de
+fonctions mathématiques qu'on pourra naturellement encapsuler dans un espace
+\texttt{math} afin d'éviter d'éventuel conflit de nom.
+\end{correction}
+
+
+\section{Déclaration de fonctions}
+
+Déclarer puis définir une fonction \inline{affiche_complexe} qui prend en arguments la partie réelle et la partie imaginaire d'un nombre complexe et qui affiche le nombre complexe sous forme "$a+\mathrm{i}b$" dans la console. Afficher en notation scientifique avec 2 chiffres après la virgule en utilisant \inline{std::scientific} et \inline{std::ios_base::precision} (on trouvera un exemple \href{https://cplusplus.com/reference/ios/ios_base/precision/}{ici}).
+
+\begin{correction}
+L'énoncé demande de déclarer une fonction \inline{affiche_complexe} qui servira à afficher un nombre complexe. Comme cette fonction ne renvoie pas de valeur, et qu'elle prend deux \inline{double}s en argument, la déclaration aura la forme :
+\begin{minted}[breaklines]{c++}
+void affiche_complexe(double re, double im);
+\end{minted}
+
+Le point d'entrée d'un programme en \cpp est la fonction \inline{int main()}. Nous y déclarons deux \inline{double}s ; \inline{a} sera la partie réelle et \inline{b} la partie imaginaire, puis nous faisons appel à la fonction \inline{affiche_complexe}. Comme la fonction \inline{main} doit renvoyer un entier, nous finissons la fonction par \inline{return 0;} (en général, la fonction main renvoie un code d'erreur, et 0 quand l'exécution a eu lieu sans problème).
+
+\begin{minted}[breaklines]{c++}
+int main() {
+  double a = 3;
+  double b = 4;
+
+  affiche_complexe(a,b);
+
+  return 0;
+}
+\end{minted}
+
+Il ne reste plus qu'à implémenter la fonction \inline{affiche_complexe}. On peut simplement écrire :
+\begin{minted}[breaklines]{c++}
+using namespace std;
+
+void affiche_complexe(double re, double im) {
+  cout.precision(2);
+  cout.setf(ios::scientific);
+  cout << "Nombre complexe: " << re << " + " << im << "i" << endl;
+}
+\end{minted}
+
+Autre code possible avec l'utilisation de manipulateurs plutôt que l'appel des méthodes de \texttt{cout} :
+\begin{minted}[breaklines]{c++}
+#include <iomanip>
+
+void affiche_complexe(double re, double im) {
+  std::cout << std::scientific << std::setprecision(2);
+  std::cout << "Nombre complexe: " << re << " + " << im << "i" << std::endl;
+}
+\end{minted}
+
+\end{correction}
+
+Déclarer puis définir deux fonctions \inline{norme} et \inline{argument} qui prennent en arguments la partie réelle et la partie imaginaire d'un nombre complexe et qui retournent la norme et l'argument (dans $]-\pi;\pi]$). On pourra utiliser les fonctions \texttt{sqrt} et \texttt{atan} de la bibliothèque \href{http://en.cppreference.com/w/cpp/header/cmath}{\inline{<cmath>}}.
+
+Note : on pourait utiliser la fonction \href{https://fr.wikipedia.org/wiki/Atan2}{\texttt{atan2}} directement, mais c'est un bon exercice de l'implémenter soi-même. Toutefois, dans un vrai code, il ne faut pas, dans la mesure du possible, ré-implémenter ce qui existe déjà !
+
+Bien évidemment, tester ces fonctions, en particuliers dans les cas limites pertinents.
+
+\begin{correction}
+Pour avoir accès aux fonctions mathématiques telles que \inline{std::sqrt} et \inline{std::atan}, nous devons inclure la bibliothèque \inline{<cmath>} de la bibliothèque standard. De manière générale, les directives \mintinline[breaklines]{c++}{#include} se trouvent en tête des fichiers \filename{*.h} et \filename{*.cpp}. On rajoutera donc au début de notre fichier \filename{main.cpp}
+\begin{minted}[breaklines]{c++}
+#include <cmath>
+\end{minted}
+Les fonctions \inline{norme} et \inline{argument} retournent un nombre de type \inline{double} et prennent en argument un nombre complexe représenté par sa  partie réelle et imaginaire, donc la déclaration des fonctions \inline{norme} et \inline{argument} est :
+\begin{minted}[breaklines]{c++}
+double norme(double re, double im);
+double argument(double re, double im);
+\end{minted}
+Comme la déclaration des fonctions doit être faite avant leur utilisation, et comme nous allons tester ces fonctions dans \inline{main}, les deux lignes ci-dessus doivent être insérées avant le début de la fonction \inline{main}.
+
+Quant à la définition de ces fonctions, elle peut avoir lieu n'importe où, en général, leur définition aura lieu après la fonction \inline{main}. \inline{<cmath>} défini les constantes \inline{M_PI} et \inline{M_PI_2}, qui seront pratiques pour \inline{argument}.
+\begin{minted}[breaklines]{c++}
+double norme(double re, double im) {
+  return sqrt(re*re + im*im);
+}
+
+double argument(double re, double im) {
+  if (re == 0) {
+    return (im < 0) ? -M_PI_2 : M_PI_2;
+  }
+  double phi = atan(im / re);
+  if(re > 0) {
+    return phi;
+  } else {
+    if (im > 0) {
+      return phi + M_PI;
+    } else {
+      return phi - M_PI;
+    }
+  }
+}
+\end{minted}
+
+Évidemment, on n'oubliera pas de tester les fonctions qu'on vient d'écrire modifiant la fonction \inline{main}.
+\begin{minted}[breaklines]{c++}
+int main()
+{
+  double a = -sqrt(2);
+  double b = sqrt(2);
+
+  affiche_complexe(a,b);
+  cout << "Norme : " << norme(a,b) << endl;
+  cout << "Argument : " << argument(a,b) << " (" << 180.0 * argument(a,b) / M_PI << "deg)" << endl;
+
+  return 0;
+}
+\end{minted}
+\end{correction}
+
+%----------------------------------------------------------------
+
+\section{Pointeurs et références}
+
+Créer un programme dans lequel vous déclarerez :
+
+\begin{itemize}
+\item un entier \texttt{i},
+\item une référence vers cet entier \texttt{ref\_i},
+\item un pointeur vers cet entier \texttt{ptr\_i}.
+\end{itemize}
+
+\vspace{1em}
+Effectuer les opérations suivantes :
+
+\begin{enumerate}
+  \item afficher l'adresse de la variable \texttt{i}
+  \item afficher la valeur de la variable \texttt{i}, directement et à travers le pointeur \texttt{ptr\_i}
+  \item modifier la valeur de la variable en utilisant sa référence \texttt{ref\_i}
+  \item afficher de nouveau la valeur de la variable, à travers le pointeur \texttt{ptr\_i}
+\end{enumerate}
+
+\begin{correction}
+
+\begin{minted}[linenos,firstnumber=1,fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+#include <iostream>
+using namespace std;
+void main()
+{
+  int i = 666;
+  int& ref_i = i;
+  int* ptr_i = &i;
+
+  cout << "Valeur de i = " << i << endl;
+  cout << "Adresse (en mémoire) de i = " << ptr_i << endl;
+  cout << "Valeur pointée par le pointeur = " << *ptr_i << endl;
+  ref_i = 42;
+  cout << "Nouvelle valeur pointée par le pointeur = " << *ptr_i << endl;
+}
+\end{minted}
+
+Soit le résultat à l'écran
+
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{shell}
+Valeur de i = 666
+Adresse (en mémoire) de i = 0x7ffd0514283c
+Valeur pointée par le pointeur = 666
+Valeur pointée par le pointeur = 42
+\end{minted}
+\end{correction}
+
+
+\section{Passage par valeur, référence et adresse} \label{ex:exp}
+
+Pouvoir calculer l'exponentielle d'un nombre complexe est extrêmement utile, pour, par exemple, calculer une transformée de Fourier. Écrire 3 fonctions \inline{exponentielle_par_valeur}, \inline{exponentielle_par_reference} et \inline{exponentielle_par_adresse} qui ont 4 arguments : les deux premiers sont la partie réelle et imaginaire du nombre dont on souhaite calculer l'exponentielle, et les deux derniers sont la partie réelle et imaginaire du résultat. On dit que l'on fait un \textit{retour par argument} (en pratique en C++, on ne fait presque plus jamais comme ça...).
+
+La fonction \inline{exponentielle_par_valeur} passera ses deux derniers arguments par valeur (ie. \inline{double re_result, double im_result}), tandis que la fonction \inline{exponentielle_par_reference} les passera par référence (ie. \inline{double & re_result, double & im_result}) et la fonction \inline{exponentielle_par_adresse} les passera par adresse (ie. \inline{double * re_result, double * im_result}). Tester les 3 différentes méthodes. Pourquoi \inline{exponentielle_par_valeur} ne donne pas le résultat attendu ? Pour la suite des exercices, on utilisera uniquement \inline{exponentielle_par_reference}, que l'on renommera en \inline{exponentielle}.
+
+\begin{correction}
+L'énoncé demande de déclarer les fonctions suivantes:
+\begin{minted}[breaklines]{c++}
+void exponentielle_par_valeur(double re, double im, double re_result, double im_result);
+void exponentielle_par_adresse(double re, double im, double * re_result, double * im_result);
+void exponentielle_par_reference(double re, double im, double & re_result, double & im_result);
+\end{minted}
+
+Pour la définition, nous avons besoin des fonctions \inline{cos}, \inline{sin} et \inline{exp} qui font partie de la bibliothèque \inline{<cmath>}, que nous avons déjà inclus.
+\begin{minted}[breaklines]{c++}
+void exponentielle_par_valeur(double re, double im, double re_result, double im_result)
+{
+  re_result = exp(re) * cos(im);
+  im_result = exp(re) * sin(im);
+}
+
+void exponentielle_par_reference(double re, double im, double & re_result, double & im_result)
+{
+  re_result = exp(re) * cos(im);
+  im_result = exp(re) * sin(im);
+}
+
+void exponentielle_par_adresse(double re, double im, double *re_result, double *im_result)
+{
+  *re_result = exp(re) * cos(im);
+  *im_result = exp(re) * sin(im);
+}
+\end{minted}
+
+Comme test, on pourra par exemple utiliser
+\begin{minted}[breaklines]{c++}
+int main()
+{
+  // Nombre complexe z = log(2) + i Pi/2 ainsi, exp(z) = 2i, et on peut facilement vérifier que le code écrit retourne le bon résultat
+  double a = log(2);
+  double b = M_PI_2;
+
+  double a1 = 0, b1 = 0;
+  exponentielle_par_valeur(a,b, a1, b1);
+  cout << "Exp par valeur : ";
+  affiche_complexe(a1,b1);
+  
+  double a2, b2;
+  exponentielle_par_reference(a, b, a2, b2);
+  cout << "Exp par reference : ";
+  affiche_complexe(a2,b2);
+
+  double a3, b3;
+  exponentielle_par_adresse(a,b, &a3, &b3);
+  cout << "Exp par adresse : ";
+  affiche_complexe(a3, b3);
+  
+  return 0;
+}
+\end{minted}
+Le passage par valeur ne donne pas le bon résultat car les variables à l'intérieur de \mintinline[breaklines,breakafter=_]{c++}{exponentielle_par_valeur} contiennent seulement des copies des valeurs passées à la fonction. Donc dans la fonction \mintinline[breaklines,breakafter=_]{c++}{exponentielle_par_valeur}, \inline{re_result} contient 0 (qui est la valeur de \inline{a1} au moment de l'appel de la fonction), mais la modification de \inline{re_result} n'a aucun effet sur  \inline{a1}. Dans la fonction \mintinline[breaklines,breakafter=_]{c++}{exponentielle_par_reference}, \inline{re_result} est en fait \inline{a2}, donc modifier \inline{re_result} revient de fait à modifier directement \inline{a2}.
+\end{correction}
+
+
+
+\section{Opérateurs \texttt{new} et \texttt{delete}}
+
+Écrire en \cpp, en utilisant les outils spécifiques à ce langage, les
+instructions C suivantes :
+
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+double * pt_tabular;
+int n_value;
+printf("Combien de valeurs souhaitez vous allouer en mémoire ?");
+scanf("%d", &n_value);
+pt_tabular = (double *) malloc (sizeof(double) * n_value);
+free(pt_tabular);
+\end{minted}
+
+On utilisera \inline{std::cin}, qui est défini dans \inline{<iostream>} et dont on trouvera la documentation \href{https://en.cppreference.com/w/cpp/io/cin}{ici}.
+
+\begin{correction}
+
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+int n_value = 0;
+cout << "Combien de valeurs souhaitez vous allouer en mémoire ? ";
+cin >> n_value;
+double * pt_tabular = new double[n_value];
+delete[] pt_tabular;
+\end{minted}
+
+Le code ci-dessus en plus d'utiliser les opérateurs \texttt{new} et \texttt{delete} en lieu et
+place de \texttt{malloc} et \texttt{free}, exploite la possibilité offerte par le \cpp de déclarer
+les variables à l'endroit où elles sont pertinentes et non nécessairement au
+début du programme comme l'oblige le langage C. Ainsi, la déclaration de la
+variable \texttt{pt\_tabular} se fait au moment de son allocation. On notera également
+que la restitution de mémoire dans le cas de l'allocation d'un tableau se fait
+par le biais de l'opérateur \texttt{delete[]}.
+\end{correction}
+
+
+\section{Allocation et dé-allocation de mémoire} \label{ex:sum_exp}
+
+Pour vérifier que la fonction \inline{exponentielle} écrite à l'exercice \ref{ex:exp} donne des résultats corrects, on va utiliser le fait que $\sum_{n=0}^{N-1} 
+e^{\frac{2i\pi n}{N}} = 0$ quel que soit $N$ un entier positif supérieur à 1. Écrire un programme qui invite l'utilisateur à enter $N$ (on utilisera \inline{std::cin >> N;}), alloue un tableau de \inline{double} contenant la partie réelle de 
+$e^{\frac{2i\pi n}{N}}$ et un  deuxième tableau contenant la partie imaginaire, valeurs qui seront calculées dans une première boucle \inline{for}. Une deuxième 
+boucle \inline{for} servira à faire la somme. Enfin, le programme affichera le résultat.
+
+\begin{correction}
+Pour allouer un tableau de double, la syntaxe est \inline{double * tableau = new double [taille];}, tandis que pour le désallouer, il faut utiliser 
+\inline{delete[] tableau;}. Une solution possible est donc:
+\begin{minted}[breaklines]{c++}
+int main() 
+{
+  unsigned int N = 0;
+  cout << "N = ";
+  cin >> N;
+
+  double * re = new double [N];
+  double * im = new double [N];
+
+  for (unsigned int n = 0; n < N; ++n) {
+    exponentielle_par_reference(0, 2 * n * M_PI / N, re[n], im[n]);
+  }
+
+  double re_result = 0, im_result = 0;
+  for (unsigned int n = 0; n < N; ++n) {
+    re_result += re[n];
+    im_result += im[n];
+  }
+
+  affiche_complexe(re_result, im_result);
+
+  delete [] re;
+  delete [] im;
+
+  return 0;
+}
+\end{minted}
+On pourra noter que les variables \inline{re[n]} et \inline{im[n]} sont directement passées par référence à la fonction \inline{exponentielle_par_reference} : en effet ce sont des variables de type \inline{double}. (Une règle pratique pour savoir si une variable peut-être passée en tant que référence est que l'expression \inline{re[n] = ...;} est valide, et que \inline{re[n]} existe toujours après l'appel de \inline{exponentielle_par_reference}). On remarquera aussi que les variables sont déclarées le plus proche possible de leur utilisation (en particulier, les variables \inline{unsigned int n;} sont déclarées dans la boucle \inline{for}). 
+\end{correction}
+
+%-----------------------------------------------
+
+\section{\mintinline{c++}{std::vector<double>}}
+
+Dans l'exercice précédent, nous avons manuellement alloué puis dé-alloué un tableau. La bibliothèque standard contient des objets qui permettent d'automatiser cette gestion de la mémoire : les objets \inline{std::vector<type>} de \href{http://en.cppreference.com/w/cpp/header/vector}{\inline{<vector>}}. Ré-écrire le programme de l'exercice précédent en utilisant \inline{std::vector<double>}, soit avec la méthode \texttt{push\_back}, soit en créant un tableau de la bonne taille dès le début.
+
+\begin{correction}
+On n'oublie pas d'inclure la bibliothèque \inline{<vector>}
+\begin{minted}[breaklines]{c++}
+#include <vector>
+\end{minted}
+
+Il faut remplacer l'allocation de mémoire par la déclaration de deux \inline{vector<double>}. Pour rajouter un élément à un \inline{vector}, il faut utiliser 
+la fonction \inline{push_back}. L'accès au $n$-ième élément de \inline{vector<double> monVector;} peut être réalisé de deux manières, soit avec la fonction 
+\inline{monVector.at(n)}, soit avec l'opérateur \inline{[](int index)} : \inline{monVector[n]}. Dans les deux cas, il faut que \inline{monVector.size() > n}.
+\begin{minted}[breaklines]{c++}
+void main() {
+  unsigned int N = 0;
+  cout << "N = ";
+  cin >> N;
+
+  vector<double> re, im;
+
+  for (unsigned int n = 0; n < N; ++n) {
+    double re_exp, im_exp;
+    
+    exponentielle_par_reference(0, 2 * n * M_PI / N, re_exp, im_exp);
+    re.push_back(re_exp);
+    im.push_back(im_exp);
+  }
+
+  double re_result = 0, im_result = 0;
+  for (unsigned int n = 0; n < N; ++n) {
+    re_result += re[n];
+    im_result += im[n];
+  }
+
+  affiche_complexe(re_result, im_result);
+}
+\end{minted}
+On remarque que les opérateurs \inline{new} et \inline{delete[]} ne sont plus présents dans le code.\\
+
+Une autre facon de faire consiste à utiliser initialiser le vecteur avec \texttt{N} éléments dès le début, en utilisant le \href{https://en.cppreference.com/w/cpp/container/vector/vector}{\textit{constructeur}} \inline{std::vector<double>(size_type count)}. On peut aussi utiliser la méthode \inline{resize()} de l'objet \inline{std::vector<double>}, qui fait en sorte que le \inline{vector} contienne exactement le nombre demandé d'élément. Le code est alors plus concis :
+
+\begin{minted}[breaklines]{c++}
+void main() {
+  unsigned int N = 0;
+  cout << "N = ";
+  cin >> N;
+
+  vector<double> re(N), im(N);
+
+  for (unsigned int n = 0; n < N; ++n) {
+    exponentielle_par_reference(0, 2 * n * M_PI / N, re[n], im[n]);
+  }
+
+  double re_result = 0, im_result = 0;
+  for (unsigned int n = 0; n < N; ++n) {
+    re_result = re[n] + re_result;
+    im_result = im[n] + im_result;
+  }
+
+  affiche_complexe(re_result, im_result);
+}
+\end{minted}
+\end{correction}
+
+\vspace{1em}
+Dans un deuxième temps, simplifier le code en remplaçant la sommation manuelle par l'algorithme\\ \inline{std::accumulate(itérateur_début, itérateur_fin, zéro)} présent dans \inline{<numeric>}. On trouvera un exemple \href{https://en.cppreference.com/w/cpp/algorithm/accumulate}{ici}.
+
+\begin{correction}
+La fonction \inline{std::accumulate} effectue la somme des éléments d'un conteneur. Comme tous les algoritmes de la bibliothèque standard, elle manipule en fait des \emph{itérateurs}, qui ne sont rien d'autre que des sortes de pointeurs adaptés à chaque type de conteneur. On fournit un itérateur de début \texttt{it\_beg} et de fin \texttt{it\_end} à l'algorithme : la somme sera effectée dans l'intervalle \texttt{[it\_beg,it\_end[}. Pour sommer le conteneur entier, il faut alors prendre \inline{it_beg = monVector.begin()} et \inline{it_end = monVector.end()}. On fournit aussi un élément d'initialisation pour commencer la somme; ici, c'est simplement \inline{0}.
+
+\begin{minted}[breaklines]{c++}
+void main() {
+  unsigned int N = 0;
+  cout << "N = ";
+  cin >> N;
+
+  vector<double> re(N), im(N);
+
+  for (unsigned int n = 0; n < N; ++n) {
+    exponentielle_par_reference(0, 2 * n * M_PI / N, re[n], im[n]);
+  }
+
+  double re_result = std::accumulate(re.begin(), re.end(), 0);
+  double im_result = std::accumulate(im.begin(), im.end(), 0);
+
+  affiche_complexe(re_result, im_result);
+}
+\end{minted}
+\end{correction}
+
+\end{document}

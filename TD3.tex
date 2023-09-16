@@ -1,0 +1,832 @@
+\documentclass{book}
+\setlength{\parindent}{0cm}
+\usepackage[textwidth=17cm]{geometry}
+
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage{amsmath,amssymb}
+
+\usepackage{graphicx}
+\usepackage{psfrag}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{verbatim}
+
+\usepackage{minted}		% Coloration syntaxique
+\usepackage[T1]{fontenc}	% Style de ~ incorrect
+\usepackage{lmodern}		% Style de ~ incorrect
+%\usemintedstyle{upsud}
+\newcommand{\inline}[1]{\mintinline[breaklines]{c++}{#1}}
+
+% Meilleures couleurs
+\usepackage{xcolor}
+\definecolor{red}{RGB}{221,42,43}
+\definecolor{green}{RGB}{132,184,24}
+\definecolor{blue}{RGB}{0,72,112}
+\definecolor{orange}{RGB}{192,128,64}
+\definecolor{gray}{RGB}{107,108,110}
+
+\usepackage[onehalfspacing]{setspace}
+\setstretch{1.02}
+
+% Solutions encadrées
+\usepackage{tikz}
+\usepackage[framemethod=tikz]{mdframed}
+\newmdenv[
+  singleextra={
+    \fill[blue] (P) rectangle ([xshift=-15pt]P|-O);
+    \node[overlay,anchor=south east,rotate=90,font=\color{white}] at (P) {\sf\textbf{Correction}};
+  },
+  firstextra={
+    \fill[blue] (P) rectangle ([xshift=-15pt]P|-O);
+    \node[overlay,anchor=south east,rotate=90,font=\color{white}] at (P) {\sf\textbf{Correction}};
+  },
+  secondextra={
+    \fill[blue] (P) rectangle ([xshift=-15pt]P|-O);
+    \node[overlay,anchor=south east,rotate=90,font=\color{white}] at (P) {\sf\textbf{Correction}};
+  },
+  backgroundcolor=blue!2,
+  linecolor=blue,
+  skipabove=12pt,
+  skipbelow=12pt,
+  innertopmargin=0.4em,
+  innerbottommargin=0.4em,
+  innerrightmargin=2.7em,
+  rightmargin=0.7em,
+  innerleftmargin=1.7em,
+  leftmargin=0.7em,
+]{correction}
+
+% Pour cacher/montrer les solutions, décommenter/commenter les 3 lignes ci-dessous
+\usepackage{comment}
+% \renewenvironment{correction}{}{}
+% \excludecomment{correction}
+
+% Fancy chapters
+\makeatletter
+  \renewcommand{\@chapapp}{TD}
+\makeatother
+
+\usepackage{fancyhdr}
+\usepackage{fncychap}
+  \ChTitleVar{\Huge\bfseries\sffamily\color{blue}}
+  \ChNameVar{\raggedleft\fontsize{22}{16}\selectfont\sffamily\color{blue}}
+  \ChNumVar{\raggedleft\fontsize{60}{62}\selectfont\sffamily\color{blue}}
+
+% Fancy sections
+\usepackage{titlesec}
+\titlespacing*{\chapter}{0pt}{-50pt}{40pt}
+\titleformat{\section}[block]
+  {\Large\bfseries\sffamily\color{blue}}
+  {\thesection}
+  {1em}
+  {}
+
+\newmdenv[nobreak,backgroundcolor=red!20,roundcorner=10pt,linecolor=white]{warning}
+
+\newenvironment{prompt}{\begin{quote}\color{blue!75}\tt\$\,
+}{\end{quote}}
+
+\newcommand{\cc}{\mbox{C}}
+\newcommand{\cpp}{\mbox{C\vspace{.5em}\protect\raisebox{.2ex}{\footnotesize++~}}}
+
+\def\filename{\emph}
+
+\newcommand{\ham}{\mathcal{H}}
+\newcommand{\en}{\mathrm{E}}
+\newcommand{\ket}[1]{\left\vert#1\right\rangle}
+\newcommand{\bra}[1]{\left\langle#1\right\vert}
+\newcommand{\ps}[2]{\left\langle#1\middle\vert#2\right\rangle}
+\newcommand{\psop}[3]{\left\langle#1\middle\vert#2\middle\vert#3\right\rangle}
+\newcommand{\com}[2]{\left[#1,#2\right]}
+\newcommand{\avg}[1]{\left<#1\right>}
+\newcommand{\abs}[1]{\left|#1\right|}
+
+
+\newcommand{\diff}{\mathrm{d}}
+\newcommand{\ud}{\,\mathrm{d}}
+\newcommand{\Tr}{\mathrm{Tr}\,}
+\newcommand{\tr}{\mathrm{tr}\,}
+\newcommand{\im}{\mathrm{Im}\,}
+\newcommand{\re}{\mathrm{Re}\,}
+\newcommand{\nn}{\nonumber}
+\newcommand{\be}{\begin{equation}}
+\newcommand{\ee}{\end{equation}}
+\newcommand{\ba}{\begin{eqnarray}}
+\newcommand{\ea}{\end{eqnarray}}
+
+\renewcommand{\l}{\left}
+\renewcommand{\r}{\right}
+
+\graphicspath{{Figures/}}
+
+\usepackage{hyperref}
+
+\begin{document}
+
+
+\setcounter{chapter}{2}
+
+\chapter{Encapsulation \& Constructeurs}
+
+Le but de ce TD est de comprendre la notion d'encapsulation, de se familiariser avec les mot-clés \inline{public} et \inline{private} et d'introduire la notion de constructeur. Dans le même esprit, il présente la notion de fonction fonction membre "constante".
+
+\section{Encapsulation}
+
+Imaginons que nous souhaitons modifier la classe \inline{Complexe} afin d'y stocker sa représentation polaire (norme, argument) pour, par exemple, éviter de recalculer systématiquement la norme et l'argument à chaque appel des méthodes \inline{norme()} et \inline{argument()}. C'est pertinent si l'accès est beaucoup plus fréquent que la modification.
+
+Un problème se pose immédiatement : comment s'assurer que les deux représentations (partie réelle, partie imaginaire) et (norme, argument) restent synchronisées lorsque l'utilisateur modifie la partie réelle ?
+
+La réponse est donnée par la technique de l'encapsulation : les membres deviennent \inline{private}, et leur accès ou modification est permise via des méthodes publiques contrôlées. Une bonne pratique peut être d'appeler un membre privé \inline{type p_membre} (où \inline{type} est le type du membre), et d'appeler les fonctions \textit{setter} \inline{void setMembre(type valeur)} et les fonctions \textit{getter} \inline{type membre() const} respectivement. Les fonctions \textit{setter} et \textit{getter} (comme leur dénomination l'indique) permettent respectivement de :
+\begin{itemize}
+\item modifier un attribut de classe \inline{private} (et éventuellement imposer des contraintes, mettre à jour d'autres membres...)
+\item obtenir par retour la valeur d'un attribut de classe \inline{private}.
+\end{itemize}
+
+Dans la déclaration de la fonction membre \textit{getter} \inline{type membre() const}, le mot-clé \inline{const} à la fin vient préciser que la méthode ne peut pas modifier l'objet : en effet un \textit{getter} se contente donc de lire les données de l'objet sans le modifier. Une fonction déclarée \inline{const} ne peut donc pas contenir d'instructions telles que \inline{p_membre = nouvelleValeur}, et ne peut faire appel qu'à des fonctions déclarées \inline{const}. Cela permet, entre autre, au compilateur d'optimiser le code, et à l'utilisateur de manipuler des références constantes d'objet pour éviter des copies inutiles.
+
+
+\section{Encapsulation de la classe \mintinline{c++}{Complexe}}
+
+Faire le travail d'encapsulation pour la classe \inline{Complexe}. On appellera \inline{double real() const} la fonction permettant d'accéder à la partie réelle du nombre, et \inline{void real(double valeur)} la méthode permettant de changer la partie réelle. En ce qui concerne la partie imaginaire, on nommera les méthodes \inline{double imag() const} et \inline{void imag(double valeur)} (le \cpp permet de surcharger les fonctions - deux fonctions peuvent avoir le même nom si leurs arguments sont différents, ou bien si une des fonctions est \inline{const} et l'autre non).
+
+Alternativement, si l'on préfère, on pourra nommer les \textit{setters} comme \inline{void set_real(double valeur)} et \inline{void set_imag(double valeur)}. On peut aussi rajouter un \textit{setter} combiné \inline{void set(double im, double re)}.\\
+
+Comme toujours, tester votre classe et ses méthodes (\textit{setters}, \textit{getters}, \inline{affiche()}, \inline{norme()}, \inline{argument()}).
+
+\section{Modification de la logique interne}
+
+Maintenant que l'encapsulation est faite, on peut se permettre de modifier le fonctionnement interne de la classe \emph{sans changer quoi que ce soit pour l'utilisateur}, ie. sans modifier le programme de test.\\
+
+Ajouter des attributs privés stockant la norme et l'argument comme présenté en introduction. Modifier les \textit{setters} pour garder sychroniser ces nouveaux attributs polaires avec les attributs carthésiens. Garder une copie des fichiers avant modification, cela servira pour le prochain TD.
+
+\begin{correction}
+La déclaration de la classe \inline{Complexe} devient donc
+\begin{minted}[breaklines]{c++}
+class Complexe {
+public:
+  double real() const;
+  void real(double valeur);
+
+  double imag() const;
+  void imag(double valeur);
+
+  void affiche();
+  double norme();
+  double argument();
+
+private:
+  double p_real, p_imag, p_norme, p_arg;
+};
+\end{minted}
+
+La définition de ces nouvelles méthodes est simple. Cependant, il faudra peut-être adapter la définition des méthodes \inline{affiche}, \inline{norme}, \inline{argument} et de la fonction non-membre \inline{exponentielle}, car on a probablement changé le nom des membres de la classe complexe.
+
+\begin{minted}[breaklines]{c++}
+// Setters
+
+void Complexe::real(double valeur) {
+  // On donne/change la valeur de la partie réelle 
+  p_real = valeur;
+  // donc on met à jour la norme et l'argument
+  p_norme = sqrt(p_real*p_real + p_imag*p_imag);
+  p_arg = atan2(p_imag, p_real);
+}
+
+void Complexe::imag(double valeur) {
+  // On donne/change la valeur de la partie imaginaire 
+  p_imag = valeur;
+  // donc on met à jour la norme et l'argument
+  p_norme = sqrt(p_real*p_real + p_imag*p_imag);
+  p_arg = atan2(p_imag, p_real);
+}
+
+// Getters
+
+double Complexe::real() const {
+  return p_real;
+}
+
+double Complexe::imag() const {
+  return p_imag;
+}
+
+double Complexe::norme() {
+  return p_norme;
+}
+
+double Complexe::argument() {
+  return p_arg;
+}
+
+// Affichage
+
+void Complexe::affiche() {
+  cout << "Nombre complexe: " << p_real << "+" << p_imag << "i" << endl;
+}
+
+\end{minted}
+
+On remarque qu'il y a duplication de code dans les \textit{setters}. Pour éviter cette duplication, on peut créer une méthode privée :
+\begin{minted}[breaklines]{c++}
+class Complexe {
+public:
+  ...
+
+private:
+  double p_real, p_imag, p_norme, p_arg;
+
+  // Synchronise norme et arg sur real et imag
+  void sync_norme_arg();
+};
+\end{minted}
+
+L'implémentation devient alors :
+
+\begin{minted}[breaklines]{c++}
+// Setters
+
+void Complexe::real(double valeur) {
+  // On donne/change la valeur de la partie réelle 
+  p_real = valeur;
+  // donc on met à jour la norme et l'argument
+  sync_norme_arg();
+}
+
+void Complexe::imag(double valeur) {
+  // On donne/change la valeur de la partie imaginaire 
+  p_imag = valeur;
+  // donc on met à jour la norme et l'argument
+  sync_norme_arg();
+}
+
+void Complexe::sync_norme_arg() {
+  p_norme = sqrt(p_real*p_real + p_imag*p_imag);
+  p_arg = atan2(p_imag, p_real);
+}
+
+...
+
+\end{minted}
+
+% L'encapsulation des classes \inline{point} et \inline{polygone} est similaire à celui fait pour la classe complexe. Déclarer les attributs de ces deux classes \inline{private} et leurs méthodes \inline{public}, puis rajouter des méthodes  \emph{getter} et  \emph{setter} \inline{public} si nécessaire.
+
+\end{correction}
+
+\section{Constructeurs}
+
+Précédemment, on déclarait un nombre complexe de la manière suivante : \inline{Complexe nombre;}. En l'absence de constructeur, ni la partie réelle ni la partie imaginaire ne sont initialisées, et peuvent donc avoir des valeurs arbitraires. Rajouter deux constructeurs dans la classe \inline{Complexe} :
+\begin{itemize}
+\item un ne prenant pas d'argument, initialisant le nombre à 0
+\item l'autre prenant deux \inline{double} en argument, initialisant partie réelle et imaginaire (sans oublier la synchronisation de la représentation polaire)
+\end{itemize}
+
+% Si l'on s'ennuie, faire le même travail pour les classes \inline{point} et \inline{Polygone}.
+
+\begin{correction}
+Il suffit de rajouter les deux constructeurs dans la classe
+\begin{minted}[breaklines]{c++}
+class Complexe {
+public:
+  Complexe();
+  Complexe(double r, double i);
+  ...
+}
+\end{minted}
+Leur implémentation peut être
+\begin{minted}[breaklines]{c++}
+Complexe::Complexe(double r, double i) {
+  p_real = r;
+  p_imag = i;
+  sync_norme_arg();
+}
+
+Complexe::Complexe() {
+  p_real = 0;
+  p_imag = 0;
+  p_norme = 0;
+  p_arg = 0;
+}
+\end{minted}
+
+Toutefois, on préfèrera en général l'utilisation de listes d'initialisation :
+
+\begin{minted}[breaklines]{c++}  
+Complexe::Complexe(double r, double i)
+  : p_real(r), p_imag(i)
+{
+  sync_norme_arg();
+}
+
+Complexe::Complexe()
+  : p_real(0), p_imag(0), p_norme(0), p_arg(0)
+{}
+
+\end{minted}
+
+% Le travail à effectuer pour la classe \inline{point} et {Polygone} est identique. 
+\end{correction}
+
+\section{Constructeur par copie}
+
+Que se passe-t-il lorsqu'on appelle la fonction \inline{Complexe exponentielle(Complexe nombre)} ? Comme l'argument est passé par valeur, le programme crée une copie. Par défaut, le programme se contente de copier la valeur de tous les membres de la classe \inline{Complexe}, un par un. Dans notre cas, ce n'est pas un problème, mais lorsque la classe gère une ressource ou de la mémoire allouée dynamiquement, c'est incorrect. Pour spécifier explicitement le comportement de la copie, il faut implémenter le constructeur par copie, qui a, dans notre cas, le prototype
+\begin{minted}[breaklines]{c++}
+Complexe::Complexe(const Complexe& autre);
+\end{minted}
+Le faire, même si dans le cas de la classe complexe, le comportement par défaut est correct. \\
+
+% Parmi les classes utilisées, lesquelles nécessitent qu'un constructeur par copie soit défini ? \\
+
+Note : Pour déclarer explicitement un constructeur par copie qui a le comportement par défaut, le \cpp11 permet de le déclarer de la manière suivante : \inline{Complexe(const Complexe & autre) = default;}. Cette déclaration fait aussi office de définition, pas besoin de l'implémenter dans le \texttt{.cpp}.
+
+\begin{correction}
+La déclaration du constructeur par copie demande de modifier la classe complexe de la manière suivante
+\begin{minted}[breaklines]{c++}
+class Complexe {
+public:
+  Complexe(const Complexe& autre);
+  ...
+};
+\end{minted}
+
+L'implémentation est très simple, il suffit de copier la valeur des attributs :
+\begin{minted}[breaklines]{c++}
+Complexe::Complexe(const Complexe& autre) {
+  p_real = autre.p_real;
+  p_imag = autre.p_imag;
+  p_norme = autre.p_norme;
+  p_arg = autre.p_arg;
+}
+\end{minted}
+Note : il est autorisé d'accéder directement au membre \inline{autre.p_real} de l'objet \inline{autre} car nous sommes à "l'intéreur" de la classe \inline{Complexe}, donc nous pouvons accéder directement à tous les membres privés de tous les objets de type \inline{Complexe}.\\
+
+De façon équivalente, avec une liste d'initialisation :
+\begin{minted}[breaklines]{c++}
+Complexe::Complexe(const Complexe& autre) 
+  : p_real(autre.p_real), p_imag(autre.p_imag),
+    p_norme(autre.p_norme), p_arg(autre.p_arg)
+{}
+\end{minted}
+
+L'autre possibilité aurait été de se contenter d'écrire
+\begin{minted}[breaklines]{c++}
+class Complexe {
+public:
+  Complexe(const Complexe & autre) = default;
+  ...
+};
+\end{minted}
+
+Les classes où il est absolument nécessaire de déclarer un constructeur par copie sont les classes qui allouent dynamiquement de la mémoire. Par exemple, si l'on avait implémenté la classe \inline{Polygone} avec un tableau alloué dynamiquement, on aurait dû déclarer et définir un constructeur par copie :
+
+\begin{minted}[breaklines]{c++}
+class Polygone {
+public:
+  ...
+  Polygone(const Polygone& autre);
+  ...
+private:
+  point* sommets;
+};
+
+Polygone::Polygone(const Polygone& autre)
+  : ordre(autre.ordre), sommets(nullptr)
+{
+  sommets = new point[ordre];
+  for (unsigned int i = 0; i < ordre; i++)
+    sommets[i] = autre.sommets[i];
+};
+\end{minted}
+
+L'utilisation de \inline{std::vector<point>} permet d'éviter la gestion manuelle de la mémoire, et le constructeur par copie par défaut est de nouveau correct.
+
+\end{correction}
+
+
+\section{Hasard}
+
+\subsection{La classe Hasard}
+
+\begin{itemize}
+\item Écrire une classe \texttt{Hasard} possédant les membres suivants :
+
+\begin{itemize}
+\item deux entiers constants non signés, l'un définissant un nombre maximal de valeurs
+  à tirer aléatoirement, l'autre la valeur maximale pouvant être générée aléatoirement
+  (\emph{cf. \hyperref[sec:orgheadline1]{Addendum 1}} relatif aux générateurs aléatoires),
+
+\item un tableau dynamique de valeurs entières non signées qui sauvegardera les résultats
+  des tirages aléatoires successifs.
+\end{itemize}
+
+%\item Déclarer un constructeur qui initialisera les membres de la classe en
+%attachant une attention particulière à allouer correctement l'espace mémoire
+%nécessaire.
+
+%\item Déclarer un destructeur de classe qui restituera l'espace mémoire alloué
+%dynamiquement.
+
+\item Surdéfinir une méthode permettant d'afficher soit l'ensemble des tirages aléatoires soit
+  le \(i^{\text{ème}}\) tirage.
+
+\item Définir une méthode de comparaison de deux instances de \texttt{Hasard} retournant un booléen
+  dont la valeur sera soit \texttt{true} soit \texttt{false} selon que les deux instances sont
+  identiques ou pas.
+\end{itemize}
+
+Exécuter plusieurs fois le programme en affichant l'ensemble des valeurs générées. Proposer
+une solution visant à générer, pour chaque exécution, une nouvelle série de valeurs aléatoires.
+
+\subsubsection{Addendum 1}
+\label{sec:orgheadline1}
+
+La librairie standard \texttt{cstdlib} du \cpp fournit un générateur de nombre
+pseudo-aléatoire \texttt{rand()} retournant une valeur entière comprise entre 0 et
+\texttt{RAND\_MAX}. Suivant les architectures, \texttt{RAND\_MAX} peut varier d'une machine à
+l'autre. Par ailleurs, comme un générateur de nombres aléatoires est exécuté sur
+un ordinateur par nature déterministe, il devient \emph{de facto} un algorithme
+déterministe. Ses sorties sont inévitablement entachées d'une caractéristique
+absente d'une vraie suite aléatoire : la périodicité. Avec des ressources
+limitées (mémoire, nombre de registres, \ldots{}), le générateur retrouvera le même
+état interne. Un générateur non périodique n'est pas impossible, mais nécessite
+une mémoire croissante pour ne pas se retrouver dans le même état. Pour
+contourner cet obstacle théorique, le générateur peut commencer dans un état
+quelconque (la ``graine'', \emph{seed} en anglais). L'initialisation se fait par
+l'intermédiaire de la méthode \texttt{srand(int seed)} qui prend pour argument la
+graine. Il produira toutefois la même séquence de nombres aléatoires si la graine
+reste identique.
+
+
+\subsection{Constructeur de recopie et accès mémoire}
+\label{sec:orgheadline2}
+
+En utilisant la classe \texttt{Hasard}, créer au sein du programme principal, une
+fonction \texttt{TestObjet} prenant pour argument un objet de type \texttt{Hasard} qui se
+contentera d'afficher un message à l'écran. Aucune opération sur l'objet ne sera
+réalisée.
+
+En parallèle, afficher, lors de la création et de la destruction d'une instance
+\texttt{Hasard}, l'adresse de l'objet courant de même que l'adresse du pointeur de
+nombre aléatoire. On s'aidera du pointeur \texttt{this} pour cette opération.
+
+Exécuter le programme principal, en créant une instance de la classe \texttt{Hasard}
+puis en l'utilisant au travers de la fonction \texttt{TestObjet}.
+
+Résoudre la situation précédente en créant un constructeur de recopie. Que se
+passe-t-il si l'objet \texttt{Hasard} n'est plus transmis par valeur mais pas
+référence à la fonction \texttt{TestObjet} ?
+
+
+\begin{correction}\label{sec:orgheadline3}
+Ci-dessous la déclaration de la classe \texttt{hasard} à placer dans le fichier \texttt{hasard.h}
+
+\begin{minted}[linenos,firstnumber=1,fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+#ifndef _hasard_h_
+#define _hasard_h_ 1
+
+class hasard {
+public:
+  // Constructeur sans argument
+  hasard();
+
+  // Constructeur surchargé
+  hasard(const unsigned int nbr_max_, const unsigned int val_max_);
+
+  // Destructeur
+  ~hasard();
+
+  // Méthode d'affichage
+  void affiche() const;
+
+  // Méthode affichant uniquement le ième tirage
+  void affiche(const unsigned int i_) const;
+
+  // Comparaison de l'objet courant avec un second objet de type hasard
+  bool compare(const hasard & h_) const;
+
+private:
+  const unsigned int m_nbr_max;   // Nombre maximal de valeurs à tirer
+  const unsigned int m_val_max;   // Valeur maximale à tirer
+  unsigned int * m_random_values; // Tableur des valeurs tirées
+};
+#endif
+\end{minted}
+
+Le fichier \texttt{hasard.cpp} de définition de la classe \texttt{hasard} peut se présenter sous
+la forme suivante :
+
+\begin{minted}[linenos,firstnumber=1,fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+#include <iostream>
+#include <cstdlib>
+using namespace std;
+#include "hasard.h"
+
+hasard::hasard() : m_nbr_max(0), m_val_max(0), m_random_values(0)
+{
+}
+
+hasard::hasard(const unsigned int nbr_max_, const unsigned int val_max_) :
+  m_nbr_max(nbr_max_), m_val_max(val_max_),
+  m_random_values(new unsigned int[nbr_max_])
+{
+  // Remplissage du tableau
+  for (unsigned int i = 0; i < m_nbr_max; i++) {
+    m_random_values[i] = rand() % m_val_max;
+  }
+}
+
+hasard::~hasard()
+{
+  // Only delete if the pointer is allocated
+  if (m_random_values) {
+    delete[] m_random_values;
+  }
+}
+
+void hasard::affiche() const
+{
+  for (unsigned int i = 0; i < m_nbr_max; i++) {
+    cout << "valeur[" << i << "] = " << m_random_values[i] << endl;
+  }
+}
+
+void hasard::affiche(const unsigned int i_) const
+{
+  if (i_ >= m_nbr_max) {
+    cerr << "ERREUR: Indice trop grand : " << i_ << ">" << m_nbr_max << endl;
+    return;
+  }
+  cout << "valeur[" << i_ << "] = " << m_random_values[i_] << endl;
+}
+
+bool hasard::compare(const hasard & h_) const
+{
+  if (m_nbr_max != h_.m_nbr_max) return false;
+
+  for (unsigned int i = 0; i < m_nbr_max; i++) {
+    if (m_random_values[i] != h_.m_random_values[i]) return false;
+  }
+  return true;
+}
+\end{minted}
+
+Plusieurs remarques concernant cette nouvelle classe et son implémentation :
+
+\begin{enumerate}
+\item Le constructeur par défaut, ligne 7, initialise les valeurs des membres
+entiers non signés à 0 tandis que le pointeur \texttt{m\_random\_values} est non alloué
+et pointe ainsi vers la valeur \texttt{0}. Il est donc possible de savoir si un
+pointeur a été ou pas alloué en fonction de la valeur vers laquelle ce
+dernier pointe c'est-à-dire l'adresse en mémoire. C'est cette propriété qui
+est utilisée dans le destructeur de la classe (ligne 21) puisque l'opérateur
+\texttt{delete} n'est invoqué que si le pointeur a été alloué et est donc différent de
+zéro (ligne 24). Cette condition d'allocation en mémoire d'un pointeur est
+importante car en cas de destruction d'un pointeur non alloué, le programme
+génèrera une erreur en toute fin d'exécution du programme.
+
+\item Le constructeur surdéfini à la ligne 11 initialise les deux membres constants
+que sont \texttt{m\_nbr\_max} et \texttt{m\_val\_max} \emph{via} les paramètres fournis en argument de ce
+constructeur, respectivement \texttt{nbr\_max\_} et \texttt{val\_max\_} et procède à l'allocation
+dynamique de mémoire du tableau \texttt{m\_random\_values} \emph{via} l'opérateur \texttt{new}
+spécifique au \cpp. La fonction \texttt{rand()} de la librairie \texttt{cstdlib} est utilisée
+afin de générer des nombres aléatoires entre 0 et \texttt{RAND\_MAX} et l'opérateur
+modulo \texttt{\%} permet alors de générer des nombres aléatoires entre 0 et \texttt{m\_val\_max}.
+
+\item La méthode \texttt{affiche(const unsigned int i\_)} vérifie en premier lieu que
+l'indice requis n'est pas supérieur au nombre maximum d'entrée alloué. Le
+développeur se prémunit ainsi de tout accès mémoire en dehors des limites
+définies par l'allocation dynamique de mémoire.
+
+\item La méthode \texttt{compare} étant une fonction membre de la classe \texttt{hasard}, il lui est
+donc possible de manipuler les membres privées de l'objet \texttt{h\_} de type
+\texttt{hasard}. Pour rappel, cette opération est inenvisageable en dehors de la
+classe car les membres relèvent du domaine privé et ne sont donc accessibles
+qu'aux méthodes de la classe. Au niveau de l'implémentation de cette fonction
+membre, il est préférable, en terme d'optimisation, de chercher les cas de
+figure où l'instance courante et l'objet \texttt{h\_} sont différents : par exemple, si
+le nombre maximum de valeurs est différents, la méthode retourne
+immédiatement la valeur \texttt{false} sans chercher à tester chacune des valeurs
+générées. De même, dès qu'une des valeurs générées aléatoirement diffère, la
+méthode interrompt le processus de comparaison en retournant la valeur \texttt{false}
+(ligne 50).
+\end{enumerate}
+
+Un point extrêmement important concernant la méthode \texttt{compare} est le fait que
+cette dernière utilise comme argument une référence constante de type \texttt{hasard}. Le
+fait que la référence soit constante assure que l'objet passé en argument ne
+sera aucunement modifié; en particulier, les éventuelles méthodes qui seront
+appellées au travers de \texttt{h\_} devront nécessairement être constantes vis-à-vis des
+membres de la classe sinon le programme ne pourra pas assurer la ``constance'' de
+l'objet \texttt{h\_} et le compilateur génèrera une erreur à la compilation.
+
+L'utilisation d'une référence assure par ailleurs que l'objet qui sera passé en
+argument de la méthode \texttt{compare} et auquel la méthode se réferera \emph{via} l'objet \texttt{h\_}
+seront les mêmes puisque étant issu du même espace mémoire. Contrairement au
+passage par valeur \emph{i.e.} une hypothétique méthode \texttt{compare(hasard h\_)}, le passage
+par référence permet de manipuler le même objet dans la méthode \texttt{compare} que
+celui fournit en argument au moment de l'appel de cette méthode. Dans le cas du
+passage par valeur, l'instance \texttt{h\_} est une \textbf{copie locale et ponctuelle} de l'objet
+fournit en argument. C'est donc un objet à part entière qui doit disparaître dès
+lors que la fonction \texttt{compare} se termine. Ainsi, lors d'un passage par valeur,
+l'objet \texttt{h\_} est détruit \emph{via} le destructeur mais, sachant que la copie du pointeur
+est de la responsabilité de l'auteur de la classe (le compilateur ne propose pas
+d'opération par défaut pour la (re)copie de membres de type pointeur si ce n'est
+la copie du pointeur et non de l'ensemble des valeurs pointées), l'espace
+mémoire est détruit à la fin de la méthode et lorsque le programme principal
+(celui contenant le bloc \texttt{main}) touche à sa fin, l'appel au destructeur génère
+une erreur de segmentation dû au fait que l'espace mémoire n'existe plus. Il est
+donc pleinement justifié d'utiliser ici un passage par référence, le passage par
+valeur ne se faisant que dans de très rare cas.
+
+La classe \texttt{hasard} nouvellement créée pourra être testée grâce au programme \texttt{test\_hasard.cpp}
+suivant
+\begin{minted}[linenos,firstnumber=1,fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+#include <iostream>
+using namespace std;
+#include "hasard.h"
+
+int main()
+{
+  // Création d'un objet de type hasard via le constructeur sans argument
+  hasard h1;
+
+  // Création d'un objet de type hasard via le constructeur surdéfini
+  hasard h2(10, 5);
+  h2.affiche();
+
+  if (! h1.compare(h2)) {
+    cout << "Les deux instances h1 et h2 sont différentes" << endl;
+  }
+  if (h2.compare(h2)) {
+    cout << "Les deux mêmes instances h2 sont (bien entendu) équivalentes" << endl;
+  }
+}
+\end{minted}
+
+En exécutant le code ci-dessus à plusieurs reprises, les valeurs retournées
+par l'instance \texttt{h2} de \texttt{hasard} seront systématiquement les mêmes quand bien ces
+dernières eurent été générées aléatoirement. Comme indiqué dans l'\hyperref[sec:orgheadline1]{Addendum 1},
+cela tient au caractère déterministe d'un ordinateur qui ne laisse donc pas de
+place à l'aléatoire. Afin de générer des séries de valeurs différentes entre
+plusieurs exécutions, il convient alors d'utiliser la fonction \texttt{srand(int)} qui permet
+d'initialiser la graine du générateur aléatoire. L'argument de cette fonction
+doit être une valeur entière qui doit nécessairement être différente à chaque
+exécution du code. On prend ainsi pour habitude d'utiliser le temps, en seconde,
+auquel s'exécute le code et on utilise de fait la libraire \texttt{time} du C/\cpp. On
+ajoutera ainsi au précédent code, les quelques lignes suivantes :
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+#include <iostream>
+#include <ctime>
+#include <cstdlib>
+using namespace std;
+#include "hasard.h"
+
+int main()
+{
+  // Initialisation de la graine du générateur aléatoire rand
+  srand(time(0));
+  ...
+}
+\end{minted}
+
+Une fois le cours sur la surcharge d'opérateur vu, la méthode \texttt{compare} pourra
+naturellement être remplacée par la surcharge de l'opérateur unaire \texttt{==}, \textbf{le
+corps de la méthode restant inchangé}. Ainsi, le prototype de la méthode \texttt{compare}
+devient
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+#ifndef _hasard_h_
+#define _hasard_h_ 1
+class hasard {
+public:
+  bool operator==(const hasard & h_) const;
+};
+#endif
+\end{minted}
+et dans le fichier source
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+bool hasard::operator==(const hasard & h_) const
+{
+  ...
+}
+\end{minted}
+On pourra ainsi remplacer les lignes 15 et 18 du programme test par les
+expressions
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+if (! (h1 == h2)) {
+  cout << "Les deux instances h1 et h2 sont différentes" << endl;
+ }
+if (h2 == h2) {
+  cout << "Les deux mêmes instances h2 sont (bien entendu) équivalentes" << endl;
+ }
+\end{minted}
+
+La surcharge d'opérateur n'apporte rien par rapport à la méthode initiale de
+comparaison si ce n'est une commodité d'écriture et une forme
+d'\textit{internationalisation}, l'opérateur \texttt{==} étant plus universel qu'une méthode au
+nom pas toujours explicite. En toute rigueur l'opération \texttt{!(h1 == h2)} serait
+avantageusement remplacée par l'opérateur \texttt{!=} ce dernier devant être également
+surchargé
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+bool operator!=(const hasard & h_) const;
+\end{minted}
+le corps de cette méthode s'écrivant
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+bool hasard::operator!=(const hasard & h_) const
+{
+  return ! (*this == h_);
+}
+\end{minted}
+
+
+
+
+Si l'on veut maintenant considérer la nécessité d'implémenter un constructeur de recopie, on pourra définir,
+avant la fonction \texttt{main()}, la fonction  \texttt{TestOjet} dans le fichier \texttt{test\_hasard.cpp} ainsi
+
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+void TestObjet(hasard  my_hasard)
+{
+  cout << "fonction : passage de hasard par valeur" << endl;
+}
+\end{minted}
+
+Et on affiche, lors de la création et de la destruction d'une instance Hasard, l'adresse de l’objet
+courant de même que l'adresse du pointeur de nombre aléatoire, en rajoutant ces deux lignes
+dans les définition des contructeurs 
+
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+  cout << "hasard cree adresse : " << this << endl;
+  cout << "tableau val aleat. cree adresse : " <<  m_random_values << endl;
+\end{minted}
+
+Et ces deux lignes dans la définition du destructeur
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+  cout << "destruction de hasard adresse : " << this << endl;
+  cout << "destruction de tableau val aleat. adresse : " <<  m_random_values << endl
+\end{minted}
+
+
+On teste la fonction TestObjet dans la fonction \texttt{main()}
+
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+int main()
+{
+// Initialisation de la graine du générateur aléatoire rand
+ srand(time(0));
+
+  
+// Création d'un objet de type hasard via le constructeur par défaut
+ cout << endl << "h1 : " << endl;
+ hasard h1;
+
+// Création d'un objet de type hasard via le constructeur surdéfini
+ cout << endl << "h2 : " << endl;
+ hasard h2(10, 5);
+ cout << endl;
+
+ TestObjet(h2);
+ h1.compare(h2);
+}
+\end{minted}
+
+Et on obtient une erreur liée à la désallocation, une deuxième fois, du tableau de nombres aléatoires
+(après la première désallocation en ``sortie'' de la fonction \texttt{TestOjet}
+
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+hamadach@csn181:~/M1-C++/TD$ ./run
+  
+h1 : 
+hasard cree adresse : 0x7ffce64da7c0
+tableau val aleat. cree adresse : 0
+
+h2 : 
+hasard cree adresse : 0x7ffce64da7b0
+tableau val aleat. cree adresse : 0x55e88e0cf030
+
+fonction : passage de hasard par valeur
+destruction de hasard adresse : 0x7ffce64da7d0
+destruction de tableau val aleat. adresse : 0x55e88e0cf030
+destruction de hasard adresse : 0x7ffce64da7b0
+destruction de tableau val aleat. adresse : 0x55e88e0cf030
+*** Error in `./run': double free or corruption (fasttop): 0x000055e88e0cf030 ***
+\end{minted}
+
+si on transmet un objet de type hasard par référence à la fonction \texttt{TestObjet}, il n'y a
+pas de copie dans la fonction et la désallocation finale (fin du \texttt{main}) peut avoir lieu.
+Par ailleurs, pour que le passage par valeur n'induise pas de problème on implémente un constructeur
+de recopie dont la définition est
+
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+hasard::hasard(const hasard & h_) :
+  m_nbr_max(h_.m_nbr_max), m_val_max(h_.m_val_max),
+  m_random_values(new unsigned int[m_nbr_max])
+{
+  for (unsigned int i = 0; i < m_nbr_max; i++) 
+    m_random_values[i] = h_.m_random_values[i];
+}
+\end{minted}
+
+
+\end{correction}
+
+\end{document}

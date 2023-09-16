@@ -1,0 +1,863 @@
+\documentclass{book}
+
+\setlength{\parindent}{0cm}
+
+\usepackage[textwidth=17cm]{geometry}
+
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage{amsmath,amssymb}
+
+\usepackage{graphicx}
+\usepackage{psfrag}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{verbatim}
+
+\usepackage{minted}		% Coloration syntaxique
+\usepackage[T1]{fontenc}	% Style de ~ incorrect
+\usepackage{lmodern}		% Style de ~ incorrect
+%\usemintedstyle{upsud}
+\newcommand{\inline}[1]{\mintinline[breaklines]{c++}{#1}}
+
+% Meilleures couleurs
+\usepackage{xcolor}
+\definecolor{red}{RGB}{221,42,43}
+\definecolor{green}{RGB}{132,184,24}
+\definecolor{blue}{RGB}{0,72,112}
+\definecolor{orange}{RGB}{192,128,64}
+\definecolor{gray}{RGB}{107,108,110}
+
+\usepackage[onehalfspacing]{setspace}
+\setstretch{1.02}
+
+% Solutions encadrées
+\usepackage{tikz}
+\usepackage[framemethod=tikz]{mdframed}
+\newmdenv[
+  singleextra={
+    \fill[blue] (P) rectangle ([xshift=-15pt]P|-O);
+    \node[overlay,anchor=south east,rotate=90,font=\color{white}] at (P) {\sf\textbf{Correction}};
+  },
+  firstextra={
+    \fill[blue] (P) rectangle ([xshift=-15pt]P|-O);
+    \node[overlay,anchor=south east,rotate=90,font=\color{white}] at (P) {\sf\textbf{Correction}};
+  },
+  secondextra={
+    \fill[blue] (P) rectangle ([xshift=-15pt]P|-O);
+    \node[overlay,anchor=south east,rotate=90,font=\color{white}] at (P) {\sf\textbf{Correction}};
+  },
+  backgroundcolor=blue!2,
+  linecolor=blue,
+  skipabove=12pt,
+  skipbelow=12pt,
+  innertopmargin=0.4em,
+  innerbottommargin=0.4em,
+  innerrightmargin=2.7em,
+  rightmargin=0.7em,
+  innerleftmargin=1.7em,
+  leftmargin=0.7em,
+]{correction}
+
+% Pour cacher/montrer les solutions, décommenter/commenter les 3 lignes ci-dessous
+\usepackage{comment}
+% \renewenvironment{correction}{}{}
+% \excludecomment{correction}
+
+% Fancy chapters
+\makeatletter
+  \renewcommand{\@chapapp}{TD}
+\makeatother
+
+\usepackage{fancyhdr}
+\usepackage{fncychap}
+  \ChTitleVar{\Huge\bfseries\sffamily\color{blue}}
+  \ChNameVar{\raggedleft\fontsize{22}{16}\selectfont\sffamily\color{blue}}
+  \ChNumVar{\raggedleft\fontsize{60}{62}\selectfont\sffamily\color{blue}}
+
+% Fancy sections
+\usepackage{titlesec}
+\titlespacing*{\chapter}{0pt}{-50pt}{40pt}
+\titleformat{\section}[block]
+  {\Large\bfseries\sffamily\color{blue}}
+  {\thesection}
+  {1em}
+  {}
+
+\newmdenv[nobreak,backgroundcolor=red!20,roundcorner=10pt,linecolor=white]{warning}
+
+\newenvironment{prompt}{\begin{quote}\color{blue!75}\tt\$\,
+}{\end{quote}}
+
+\newcommand{\cc}{\mbox{C}}
+\newcommand{\cpp}{\mbox{C\vspace{.5em}\protect\raisebox{.2ex}{\footnotesize++~}}}
+
+\def\filename{\emph}
+
+\newcommand{\ham}{\mathcal{H}}
+\newcommand{\en}{\mathrm{E}}
+\newcommand{\ket}[1]{\left\vert#1\right\rangle}
+\newcommand{\bra}[1]{\left\langle#1\right\vert}
+\newcommand{\ps}[2]{\left\langle#1\middle\vert#2\right\rangle}
+\newcommand{\psop}[3]{\left\langle#1\middle\vert#2\middle\vert#3\right\rangle}
+\newcommand{\com}[2]{\left[#1,#2\right]}
+\newcommand{\avg}[1]{\left<#1\right>}
+\newcommand{\abs}[1]{\left|#1\right|}
+
+
+\newcommand{\diff}{\mathrm{d}}
+\newcommand{\ud}{\,\mathrm{d}}
+\newcommand{\Tr}{\mathrm{Tr}\,}
+\newcommand{\tr}{\mathrm{tr}\,}
+\newcommand{\im}{\mathrm{Im}\,}
+\newcommand{\re}{\mathrm{Re}\,}
+\newcommand{\nn}{\nonumber}
+\newcommand{\be}{\begin{equation}}
+\newcommand{\ee}{\end{equation}}
+\newcommand{\ba}{\begin{eqnarray}}
+\newcommand{\ea}{\end{eqnarray}}
+
+\renewcommand{\l}{\left}
+\renewcommand{\r}{\right}
+
+\graphicspath{{Figures/}}
+
+\usepackage{hyperref}
+
+\begin{document}
+
+
+\setcounter{chapter}{1}
+\chapter{Classes}
+
+\begin{warning}
+À partir de ce TD il est demandé de respecter les noms de classes et de variables donnés par l'énoncé, ainsi que la signature des fonctions. Aussi, pour chaque classe, on créera deux fichiers, \filename{nomdelaclasse.h}, qui contiendra toutes les déclarations, et \filename{nomdelaclasse.cpp}, qui contiendra toutes les définitions (sauf mention contraire de l'énoncé). On n'oubliera pas de créer un troisième fichier \filename{test\_nomdelaclasse.cpp} qui fournira un programme principal de test de la classe. On rappelle qu'un fichier \filename{*.h} doit nécessairement être ``gardé'' : il commencera par les lignes
+\begin{minted}[breaklines]{c++}
+#ifndef NOMDEFICHIER_H
+#define NOMDEFICHIER_H
+\end{minted}
+et finira par la ligne \mintinline[breaklines]{c++}{#endif // NOMDEFICHIER_H}. Ces lignes, appelées \emph{header guard} assurent que le contenu du fichier sera déclaré une et une seule fois, quelque soit la manière dont il est inclus. Aussi, pour inclure les fichiers \filename{*.h} créés dans d'autres fichiers \filename{*.h} ou \filename{*.cpp}, on utilisera la syntaxe \mintinline{c++}{#include "nomdufichier.h"}, avec des guillemets \inline{""} (et non des chevrons \inline{<>}).
+\end{warning}
+
+Lorsqu'on travaille avec un grand nombre de classes (et donc un très grand nombre de fichiers), compiler à la main devient compliqué. Pour rendre la  compilation plus aisée il existe un outil : \texttt{make}. Copiez le fichier \filename{Makefile\_template} présent sur e-campus dans le dossier contenant votre code et renommez-le en \filename{Makefile}. Alternativement, vous pouvez utiliser la version plus simple mais moins automatique, \filename{Makefile\_simple}.
+
+% On peut par exemple utiliser la commande
+% \begin{prompt}
+% cp /public/mphyo/M1-C++/TD2/makefile\_template makefile
+% \end{prompt}
+% qui copiera le fichier \filename{/public/mphyo/M1-C++/TD2/makefile\_template} dans le dossier courant en le renommant \filename{makefile}.
+
+Les premières lignes sont à modifier en fonction des fichiers à compiler :
+\begin{minted}[breaklines]{make}
+#PARTIE A MODIFIER : Liste des fichiers .cpp (et uniquement les .cpp) à compiler
+SOURCES=
+#FIN DE LA PARTIE A MODIFIER
+\end{minted}
+
+\begin{correction}
+La totalité du \filename{Makefile} est
+\begin{minted}[breaklines]{make}
+#PARTIE A MODIFIER : Liste des fichiers .cpp (et uniquement les .cpp) à compiler
+SOURCES=
+#FIN DE LA PARTIE A MODIFIER
+
+# Nom du compilateur
+CXX=g++
+# Arguments pour l'étape d'édition de liens : tous les avertissements
+LDFLAGS=-Wall -Wextra
+# Arguments pour l'etape de compilation : tous les avertissements (et même plus) sauf "ignored-attributes" (présence d'un bug dans GCC version 6 et plus)
+CPPFLAGS=-Wall -Wextra
+# Librairies : none
+LDLIBS=
+
+# Liste des fichier objet (*.o), générée automagiquement
+OBJETS=$(subst .cpp,.o,$(SOURCES))
+
+all: build
+
+build: $(OBJETS)
+    $(CXX) $(LDFLAGS) -o run $(OBJETS) $(LDLIBS) 
+
+depend: .depend
+
+.depend: $(SOURCES)
+    rm -f ./.depend
+    $(CXX) $(CPPFLAGS) -MM $^>>./.depend;
+
+clean:
+    rm $(OBJETS)
+    rm -f *~ .depend
+
+include .depend
+\end{minted}
+Attention si vous copiez-collez ce contenu dans votre \filename{Makefile} : les indentations doivent être des tabulations, et non des espaces !
+\end{correction}
+
+Une fois le \filename{makefile} modifié, le programme peut être compilé en lançant la commande
+\begin{prompt}
+make
+\end{prompt}
+dans le répertoire où est situé le \filename{makefile}. Une fois la compilation terminée avec succès, le programme peut-être exécuté via
+\begin{prompt}
+./run
+\end{prompt}
+
+\par Ce TD porte principalement sur le concept d'objet en \cpp, en particulier il permet de se familiariser avec la notion de classe. En attendant le cours sur l'encapsulation, déclarer tous les membres avec une visibilité publique :
+
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+class point
+{
+public:
+  ...
+};
+\end{minted}
+
+\section{Déclaration et utilisation de classe en C++}
+
+\subsection{Classe \texttt{point}}
+
+Créer une classe \texttt{point} composée de deux coordonnées réelles puis déclarer et
+définir une méthode pour initialiser ces valeurs ainsi qu'une méthode affichant
+les deux coordonnées.
+
+\begin{correction}
+\subsection*{Classe \texttt{point}}
+
+\subsubsection*{Déclaration (\texttt{point.h})}
+
+Comme indiqué dans le sujet, la déclaration de la classe \texttt{point} \emph{i.e.} les
+attributs de la classe ainsi que les prototypes des méthodes, se fait dans un
+fichier d'en-tête dédié appellé \texttt{point.h}
+
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+#ifndef _POINT_H_
+#define _POINT_H_ 1
+
+class point {
+ public:
+  // Méthode d'initialisation
+  void initialise(const double x_, const double y_);
+
+  // Méthode d'affichage
+  void affiche() const;
+
+  // Attributs
+  double x;
+  double y;
+};
+
+#endif
+\end{minted}
+
+On retrouve en préambule de la déclaration, les directives de préprocesseur
+\texttt{\#ifndef/\#define} qui interdisent l'inclusion multiple de ce fichier. Le cours sur
+l'encapsulation n'ayant pas été abordé, les méthodes \texttt{initialise} et \texttt{affiche} de
+même que les données membres ou attributs ont tous une visibilité publique. Sans
+présager de comment les méthodes d'initialisation et d'affichage seront
+implémentées, toutes deux ne retournent pas de données (type \texttt{void}), la fonction
+\texttt{initialise} prenant deux arguments \texttt{x\_} et \texttt{y\_}.
+
+Un point à noter est la présence du \texttt{const} à la fin de la déclaration de la méthode \texttt{affiche} qui indique que cette fonction-membre ne modifiera pas les données membres. Ça n'a rien d'obligatoire, et on verra plus en détails cette notion dans la suite du cours. En revanche, la fonction d'initialisation ne présente pas un tel attribut du fait que, par construction, cette méthode assignera des valeurs aux membres \texttt{x\_} et \texttt{y\_}.
+
+\subsubsection*{Déclaration (\texttt{point.cpp})}
+
+Le fichier \texttt{point.cpp} qui contient la définition des méthodes se présente sous la
+forme suivante
+
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+#include "point.h"
+
+#include <iostream>
+using namespace std;
+
+void point::initialise(const double x_, const double y_)
+{
+  x = x_;
+  y = y_;
+}
+
+void point::affiche() const
+{
+  cout << "(x,y) = (" << x << "," << y << ")" << endl;
+}
+\end{minted}
+
+Ce fichier devant être indépendamment compilé, la déclaration de la classe doit
+être connue. C'est l'objet de l'inclusion du fichier \texttt{point.h} (ligne 1). Les
+définitions des méthodes reprennent les prototypes déclarés dans le fichier
+\texttt{point.h} en préfixant néanmoins leurs intitulés du nom de la classe suivi de
+l'opérateur de résolution de portée \texttt{::}. Ce préfixe assure au compilateur que les
+fonctions \texttt{initialise} et \texttt{affiche} sont des fonctions membres de la classe \texttt{point} et
+non des fonctions externes à cette classe : la présence de ce préfixe est donc
+primordiale dans l'association entre la déclaration des méthodes et leurs
+définitions.
+
+Comme expliqué lors du cours sur les classes en \cpp, le principe sur lequel
+repose la programmation orientée objet tient en l'association de données membres
+et de fonctions membres. Ainsi, les fonctions membres ou méthodes de la classe
+\texttt{point} que sont \texttt{initialise} et \texttt{affiche} ont, de par leur statut de méthodes, la
+possibilité de manipuler les membres de la classe \texttt{point} que sont \texttt{x} et \texttt{y}. La
+méthode \texttt{initialise} assigne ainsi des valeurs aux membres \texttt{x} et \texttt{y} par le biais
+des arguments \texttt{x\_} et \texttt{y\_} tandis que la méthode \texttt{affiche} se contente de présenter
+ces valeurs sans les modifier (d'où la présence du mot-clé \texttt{const}).
+
+Dernier point, l'inclusion de la librairie \texttt{iostream} de gestion des
+flux d'entrée et sortie (\texttt{cout/cin}) est nécessaire puisque la méthode \texttt{affiche}
+utilise la sortie standard \texttt{cout}.
+
+\subsubsection*{Programme test (\texttt{main.cpp})}
+
+Afin de tester la classe \texttt{point} indépendamment de toute développement ou
+utilisation futur, il convient de créer pour chaque classe ce que l'on appelle
+un test unitaire. Ces programmes-tests permettent donc de tester les
+fonctionnalités d'une classe et de s'assurer de son bon fonctionnement en dehors
+de toute utilisation dans un cadre plus large faisant intervenir d'autres
+classes, d'autres programmes\ldots{} C'est donc une étape indispensable et
+malheureusement, trop souvent négligée. Un programme test de la classe \texttt{point}
+peut prendre la forme suivante
+
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+#include "point.h"
+
+int main()
+{
+  // Création d'une instance de la classe point
+  point my_point;
+  my_point.initialise(6.5, 8.5);
+  my_point.affiche();
+  return 0;
+  
+}
+\end{minted}
+
+Ce programme teste successivement la création d'un objet de type \texttt{point}, son
+initialisation puis l'affichage des valeurs d'abscisse et d'ordonnée. La
+présence de la directive \texttt{\#include "point.h"} en préambule du programme
+permet de s'assurer d'une part, que la classe \texttt{point} existe en soi et d'autre
+part, que l'utilisation des méthodes associées à cette classe est correctement
+faite. La liaison entre l'utilisation des méthodes et leurs définitions est
+réalisée par le compilateur lors de l'édition de lien, troisième étape de la
+compilation (\emph{cf.} cours sur la compilation). 
+
+\subsubsection*{Makefile}
+
+\subsubsection*{Avec \texttt{Makefile\_template}}
+
+On n'oubliera pas de modifier le \filename{makefile} 
+\begin{minted}{make}
+#PARTIE A MODIFIER : Liste des fichiers .cpp (et uniquement les .cpp) à compiler
+SOURCES=main.cpp point.cpp
+#FIN DE LA PARTIE A MODIFIER
+\end{minted}
+
+On peut ensuite compiler et exécuter notre programme test avec
+\begin{prompt}
+make \&\& ./run
+\end{prompt}
+
+\subsubsection*{Avec \texttt{Makefile\_simple}}
+
+Un makefile minimaliste serait :
+
+\begin{minted}{make}
+CXXFLAGS = -Wall
+HEADERS = point.h
+OBJETS = main.o point.o
+
+test_point: $(OBJETS)
+  g++ -o $@ $^ $(CXXFLAGS)
+  ./test_point
+
+%.o: %.cpp $(HEADERS)
+  g++ -c -o $@ $< $(CXXFLAGS)
+\end{minted}
+
+Que fait \text{make} lorsqu'on l'invoque ? Dans l'ordre :
+\begin{enumerate}
+  \item Il veut construire la cible \texttt{test\_point}. Pour ça, il voit qu'il faut les dépendances \mintinline{make}{$(OBJETS)}, c'est à dire les fichiers objets \texttt{main.o} et \texttt{point.o}.
+  \item Il regarde donc si \texttt{main.o} existe et si il est à jour. Sinon, il construit la cible \texttt{main.o}. Il voit que c'est possible avec la cible "joker" \texttt{\%.o}. Il voit qu'il a besoin du fichier source correspondant \texttt{\%.cpp} (c'est à dire \texttt{main.cpp}), ainsi que les headers. Il exéctera les commandes de cette cibles que si ces dépendances ont étés modifiées depuis la dernière invocation.
+  \item Exécution de la commande \mintinline{make}{g++ -c -o $@ $< $(CXXFLAGS)} : il s'agit de la compilation du fichier source \mintinline{make}{$<} et de la génération du fichier objet \mintinline{make}{$@}. La variable \mintinline{make}{$@} correspond au nom de la cible (\texttt{main.o} ici). La variable \mintinline{make}{$<} correspond au nom de la première dépendance (\texttt{main.cpp} ici).
+  \item Même chose pour \texttt{point.o}.
+  \item Maintenant que toutes les dépendances de \texttt{test\_point} sont satisfaites, on peut exécuter les commandes de cette cible. La première est \mintinline{make}{g++ -o $@ $^ $(CXXFLAGS)} : il s'agit de l'édition de lien, générant un exécutable \mintinline{make}{$@} à partir des fichiers objets \mintinline{make}{$^}. La variable \mintinline{make}{$@} correspond au nom de la cible (\texttt{test\_point} ici). La variable \mintinline{make}{$^} correspond au nom de toutes les dépendances (\texttt{main.o point.o} ici).
+  \item La deuxième commande est \texttt{./test\_point} : il s'agit de l'exécution de l'exécutable.
+\end{enumerate}
+
+\subsubsection*{Encore plus élémentaire...}
+
+Un makefile avec des noms explicites serait :
+
+\begin{minted}{make}
+CXXFLAGS = -Wall
+
+test_point: main.o point.o
+  g++ main.o point.o -o test_point $(CXXFLAGS)
+  ./test_point
+
+main.o: main.cpp point.h
+  g++ -c main.cpp -o main.o $(CXXFLAGS)
+
+point.o: point.cpp point.h
+  g++ -c point.cpp -o point.o $(CXXFLAGS)
+\end{minted}
+
+\end{correction}
+
+\subsection{Tableau d'objets}
+
+Déclarer un tableau (\inline{std::vector}) contenant cinq objets de type \texttt{point}. Initialiser chacune
+des entrées du tableau puis créer une fonction affichant les coordonnées du
+point le plus éloigné de l'origine.
+
+Pour cela, il sera utilise de créer une nouvelle méthode \inline{point::dist_origine()} qui renvoie la distance à l'origine.
+
+\begin{correction}
+
+\subsection*{Tableau d'objets}
+La notion de classe n'étant qu'une extension de la notion de type, on peut donc
+stocker des objets dans des tableaux. Le programme ci-dessous propose ainsi de
+stocker 5 instances de type \texttt{point} dans un tableau dynamiquement alloué
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+#include "point.h"
+
+void main()
+{
+  const unsigned int npoint = 5;
+  point* my_points = new point[npoint];
+  // Initialisation arbitraire des 5 objets
+  for (unsigned int i = 0; i < npoint; i++)
+    my_points[i].initialise(i, 2*i);
+  // Affichage (range-based loop)
+  for (unsigned int i = 0; i < npoint; i++)
+    my_points[i].affiche();
+  // Désallocation
+  delete[] points;
+}
+\end{minted}
+
+La même chose peut être faire plus simplement avec \inline{std::vector} :
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+#include "point.h"
+
+void main()
+{
+  std::vector<point> my_points(5);
+  // Initialisation arbitraire des 5 objets (for i loop)
+  for (unsigned int i = 0; i < my_points.size(); i++)
+    my_points[i].initialise(i, 2*i);
+  // Affichage
+  for (point p : my_points)
+    p.affiche();
+}
+\end{minted}
+
+La recherche du point le plus éloigné par rapport à l'origine ne peut se faire
+qu'au travers d'une fonction externe. En effet, c'est un non sens que de
+chercher pour un objet de type \texttt{point} s'il est plus éloigné que lui-même de
+l'origine. Ce genre de raisonnement permet ainsi de déduire que cette fonction
+ne peut être une méthode à part entière de la classe \texttt{point} et est donc
+nécessairement, une fonction externe. On peut en revanche, envisager d'ajouter à
+la classe \texttt{point} une méthode permettant de retourner la norme. Ainsi, la classe
+\texttt{point} verra sa déclaration modifiée en conséquence
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+class point {
+public:
+  ...
+  // Calcul de la distance à l'origine
+  double dist_origine() const;
+};
+\end{minted}
+dont la définition sera la suivante
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+#include <cmath>
+...
+double point::dist_origine() const
+{
+  return sqrt(x*x + y*y);
+}
+\end{minted}
+
+Quant à la fonction externe que l'on placera dans le programme principal, on
+pourra l'écrire de la façon suivante
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+unsigned int get_farthest(std::vector<point> points)
+{
+  double max_dist = 0.0;
+  unsigned int max_idx = -1;
+  for (unsigned int i = 0; i < points.size(); i++) {
+    double dist = points[i].dist_origine();
+    if (dist > max_dist) {
+      max_idx = i;
+      max_dist = dist;
+    }
+  }
+  return idx;
+}
+\end{minted}
+et l'utiliser ainsi
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+#include "point.h"
+#include <iostream>
+using namespace std;
+
+// Fonction get_farthest
+
+int main()
+{
+  std::vector<point> my_points(5);
+  // Initialisation arbitraire des 5 objets (for i loop)
+  for (unsigned int i = 0; i < my_points.size(); i++)
+    my_points[i].initialise(i, 2*i);
+
+  unsigned int i = get_farthest(my_points);
+  cout << "Le point le plus éloigné de l'origine est le point #" << i << " de coordonnées ";
+  my_points[i].affiche();
+}
+\end{minted}
+
+\end{correction}
+
+% \renewenvironment{correction}{}{}
+% \excludecomment{correction}
+
+\subsection{Classe \texttt{Polygone}}
+
+\subsubsection{Initialisation}
+Créer une classe \texttt{Polygone} possédant un unique attribut : un tableau de \texttt{point} contenant les coordonnées des sommets.
+
+Définir une méthode \inline{initialise_régulier(unsigned int ordre)} permettant l'initialisation de la classe \texttt{Polygone} comme un polygone d'ordre \inline{ordre} \href{https://fr.wikipedia.org/wiki/Polygone_r%C3%A9gulier}{régulier}, c'est-à-dire équilatéral et équiangle, et de taille aléatoire\footnote{On peut utiliser les objets de \texttt{<random>} de la bibliothèque standard, par exemple \href{https://en.cppreference.com/w/cpp/numeric/random/uniform_real_distribution}{\inline{std::uniform_real_distribution}}}.
+
+Définir une méthode \inline{affiche_sommets} affichant la liste des coordonnées des sommets.
+
+Faire un programme test créant un polygone régulier et affichant ses sommets.
+
+\subsubsection{Périmètre}
+
+Définissez ensuite une méthode qui calculera le périmètre d'un polygone. On supposera que les segments entre chaque sommet consécutif ne se croient pas.
+
+Déclarer par la suite un tableau de trois éléments de type \texttt{Polygone}. Remplir chacune des trois instances puis faire une fonction qui renverra l'indice de celui ayant le plus grand périmètre.
+
+\begin{correction}
+
+\subsection*{Classe \texttt{Polygone}}
+
+De nouveau, la notion de classe étant une extension de la notion de type, il est
+possible que des classes soient composées d'autres objets. Ainsi, la classe
+\texttt{polygone} est, par construction, composée d'un ensemble de points \emph{i.e.} d'objets
+de type \texttt{point}. Le code ci-dessous propose une solution au problème posé en
+utilisant un \inline{std::vector}.
+
+\subsubsection*{Déclaration de la classe \texttt{polygone} : fichier \texttt{polygone.h}}
+
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+#ifndef _POLY_H_
+#define _POLY_H_ 1
+
+#include "point.h"
+
+class polygone {
+public:
+
+  // Méthode d'initialisation d'un polygone régulier d'ordre `ordre_` et de taille aléatoire
+  void initialise_régulier(unsigned int ordre_);
+
+  // Méthode d'affichage des sommets
+  void affiche_sommets() const;
+
+  // Calcul du périmètre
+  double calc_perimetre() const;
+
+  // Attributs
+  std::vector<point> sommets;
+};
+
+#endif
+\end{minted}
+
+\subsubsection*{Définition de la classe \texttt{polygone} : fichier \texttt{polygone.cpp}}
+
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+#include "polygone.h"
+#include <iostream>
+#include <cstdlib> // rand()
+#include <cmath>
+using namespace std;
+
+void polygone::initialise_régulier(unsigned int n)
+{
+  // Création du tableau de points
+  sommets = std::vector<point>(n);
+
+  double taille = (rand() % 10 + 1) / 10.; // taille de 0 à 1
+
+  // Initialisation de chacun des sommets via la méthode initialise de la classe point
+  for (unsigned int k = 0; k < n; k++) {
+    double angle = (2*M_PI * k) / n;
+    sommets[k].initialise(
+      taille * cos(angle),
+      taille * sin(angle),
+    );
+  }
+}
+
+void polygone::affiche_sommets() const
+{
+  cout << "Nombre de sommets : " << ordre << endl;
+  for (unsigned int i = 0; i < ordre; i++) {
+    cout << "Sommet #" << i << " : ";
+    sommets[i].affiche();
+  }
+}
+
+double polygone::calc_perimetre() const
+{
+  //on considère que les sommets sont classés dans le tableau selon le périmètre
+  //(pas de croisement des côtés du polygone)
+  double perimetre = sqrt( pow((sommets[0].x - sommets[ordre-1].x),2) +
+                           pow((sommets[0].y - sommets[ordre-1].y),2) );
+  
+  for (unsigned int i = 0; i < ordre; i++) {                            
+    perimetre += sqrt( pow((sommets[i].x - sommets[i+1].x),2)
+                     + pow((sommets[i].y - sommets[i+1].y),2) );
+  }
+  
+ return perimetre;
+}
+\end{minted}
+
+\subsubsection*{Programme test \texttt{test\_polyone.cpp}}
+\label{sec:orgheadline9}
+\begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
+#include "polygone.h"
+#include <iostream>
+using namespace std;
+
+unsigned int get_longest(std::vector<polygone> polygones)
+{
+  double max_perim = 0.0;
+  unsigned int max_idx = -1;
+  for (unsigned int i = 0; i < polygones.size(); i++) {
+    double perim = polygones[i].calc_perimetre();
+    if (perim > max_perim) {
+      max_idx = i;
+      max_perim = perim;
+    }
+  }
+  return idx;
+}
+
+void main()
+{
+  std::vector<polygone> my_polygones(3);
+  for (unsigned int i = 0; i < npoly; i++) {
+    // Creation d'hexagones
+    my_polygones[i].initialise_régulier(6);
+    my_polygones[i].affiche_sommets();
+  }
+  unsigned int i = get_longest(my_polygones);
+  cout << "Le polygone ayant le plus long périmètre est le polygone #" << i << endl;
+  my_polygones[i].affiche_sommets();
+}
+\end{minted}
+
+\end{correction}
+
+\section{La classe \mintinline{c++}{Complexe}}
+ 
+Dans le précédent TD, nous représentions un nombre complexe par sa partie réelle et sa partie imaginaire. Chaque fois que nous passions un nombre complexe en argument d'une fonction nous devions passer sa partie réelle et sa partie imaginaire... En utilisant le concept d'objet, créer une classe \inline{Complexe} qui représente un nombre complexe. Transformer les fonctions \inline{affiche}, \inline{norme} et \inline{argument} écrites précédemment afin que ces dernières soient des membres de la classe \inline{Complexe}. On n'oubliera pas le mot-clé \inline{public}, et on pourra se renseigner sur la fonction \href{http://en.cppreference.com/w/cpp/numeric/math/atan2}{\inline{atan2}} de \inline{<cmath>}. Bien évidemment, on testera le code écrit.
+
+\begin{correction}
+
+On défini ensuite la classe \inline{Complexe} de la manière suivante, dans \filename{complexe.h} (le mot-clé \inline{public} est essentiel ; par défaut les membres et méthodes d'une classe sont privés (\inline{private}), non accessibles depuis l'extérieur de la classe)
+\begin{minted}[breaklines]{c++}
+#ifndef COMPLEX_H
+#define COMPLEX_H
+
+class Complexe
+{
+public:
+  double re, im;
+
+  void affiche();
+
+  double norme();
+  double argument();
+};
+
+#endif // COMPLEX_H
+\end{minted}
+Elle contient deux membres, la partie réelle et la partie imaginaire, et déclare les trois méthodes demandées par l'énoncé. On aura pris soin d'inclure le \emph{header guard}.
+
+L'implémentation \emph{doit} être faite dans le fichier \filename{complexe.cpp} (en général, sauf pour les méthodes dites en ligne, \inline{inline}). On commence par inclure les fichiers d'en-tête donnant accès à la classe \inline{Complexe}, à \inline{cout} et aux fonctions mathématiques
+\begin{minted}[breaklines]{c++}
+#include "complexe.h"
+
+#include <iostream>
+#include <cmath>
+using namespace std;
+\end{minted}
+Puis on définit les méthodes de la classe \inline{Complexe} dans \filename{complexe.cpp}
+\begin{minted}[breaklines]{c++}
+void Complexe::affiche()
+{
+  cout << "Nombre complexe: " << re << " + " << im << "i" << endl;
+}
+
+double Complexe::norme()
+{
+  return sqrt(re*re + im*im);
+}
+
+double Complexe::argument()
+{
+  return atan2(im, re);
+}
+\end{minted}
+On n'oubliera pas la résolution de portée \inline{Complexe::} devant le nom des méthodes.
+
+Finalement, on teste ce qu'on vient d'écrire dans \filename{main.cpp}:
+\begin{minted}[breaklines]{c++}
+#include <iostream>
+using namespace std;
+
+#include "complexe.h"
+
+int main()
+{
+  Complexe a;
+
+  a.re = sqrt(2);
+  a.im = sqrt(2);
+
+  a.affiche();
+
+  cout << "Norme : " << a.norme() << endl;
+  cout << "Argument :" << a.argument() << " (" << 180.0 * a.argument() / M_PI << "deg)" << endl;
+
+  return 0;
+}
+\end{minted}
+On n'oubliera pas de modifier le \filename{makefile} 
+\begin{minted}{make}
+#PARTIE A MODIFIER : Liste des fichiers .cpp (et uniquement les .cpp) à compiler
+SOURCES=main.cpp complexe.cpp
+#FIN DE LA PARTIE A MODIFIER
+\end{minted}
+avant de lancer les commandes
+\begin{prompt}
+make
+\end{prompt}
+et (en cas de succès de la compilation)
+\begin{prompt}
+./run
+\end{prompt}
+
+\end{correction}
+
+\section{La fonction exponentielle}
+Déclarer et définir une fonction \emph{non-membre} \inline{exponentielle(Complexe)} qui prend en argument un nombre complexe et qui renvoie un nombre complexe. Additionnellement, on pourra déclarer et définir deux fonctions non-membres \inline{double norm(Complexe nombre)} et \inline{double arg(Complexe nombre)}.
+
+\begin{correction}
+Comme nous avons une classe \inline{Complexe} à notre disposition, nous pouvons retourner le résultat d'une opération via \inline{return} au lieu de devoir passer des argument par référence. La fonction \inline{exponentielle} a pour déclaration (dans \filename{complexe.h})
+\begin{minted}[breaklines]{c++}
+Complexe exponentielle(Complexe a);
+\end{minted}
+et pour définition (dans \filename{complexe.cpp})
+\begin{minted}[breaklines]{c++}
+Complexe exponentielle(Complexe a)
+{
+  Complexe result;
+
+  result.re = exp(a.re) * cos(a.im);
+  result.im = exp(a.re) * sin(a.im);
+
+  return result;
+}
+\end{minted}
+Comme la fonction \inline{exponentielle} n'est pas une fonction membre de la classe \inline{Complexe}, il n'y a pas d'opérateur de résolution de portée \inline{Complexe::} lors de la définition de la fonction dans le fichier \inline{complexe.cpp}
+
+Sans rien changer à la définition de \inline{exponentielle} (mis à part la signature de la fonction), nous aurions pu la déclarer de la manière suivante
+\begin{minted}[breaklines]{c++}
+Complexe exponentielle(const Complexe & a);
+\end{minted}
+Cette définition signifie que l'argument est passé par référence, mais que l'utilisateur de la fonction est assuré que la valeur de l'argument ne sera pas modifié par la fonction. \\
+
+Pour les fonctions \inline{norm} et \inline{arg}, le code est très simple car nous pouvons faire appel aux fonctions membres \inline{norme} et \inline{argument}
+\begin{minted}[breaklines]{c++}
+double norm(Complexe nombre) {
+  return nombre.norme();
+}
+
+double arg(Complexe nombre) {
+  return nombre.argument();
+}
+\end{minted}
+
+\end{correction}
+
+\section{[Exercice supplémentaire] Tableaux de complexes}
+ 
+% Dans le TD précédent, nous avons manuellement alloué puis désalloué un tableau avec les opérateurs \inline{new} et \inline{delete[]}. La librairie standard contient des objets qui permettent d'automatiser cette gestion de la mémoire : les objets \inline{std::vector<type>} déclarés dans le header \href{http://en.cppreference.com/w/cpp/header/vector}{\inline{<vector>}}. Ces dernier sont des tableaux de taille variable.
+
+Dans le TD précédent (exercices 1.6 et 1.7), nous avons utilisé des tableaux de parties réelles et imaginaires. Ré-écrire le programme de l'exercice 1.6 ou 1.7 du TD1 en utilisant la classe \inline{std::vector<Complexe>}. \\
+
+Les fonctions qui peuvent être utiles sont
+\begin{itemize}
+ \item \inline{vector<Complexe> monTableau;} pour déclarer un objet de type \inline{vector<Complexe>} (un tableau de taille variable contenant des nombres complexes),
+ \item \inline{monTableau.push_back(nombreComplexe)} pour rajouter le nombre \inline{nombreComplexe} à la fin du tableau. La taille du tableau est ajustée automatiquement,
+ \item \inline{cout << "Nombre d'elements du tableau : " << monTableau.size() << endl;} pour connaître le nombre d'éléments dans le tableau. \inline{monTableau.size()} a pour type \inline{unsigned int},
+ \item si la classe \inline{Complexe} possède une méthode \inline{affiche()}, \inline{monTableau[i].affiche();} permet d'appeller la méthode \inline{affiche()} sur le $i$-ème élément du tableau (attention, il faut que \inline{monTableau.size() > i}, on peut aussi utiliser \inline{monTableau.at(i).affiche();} si la méthode \inline{affiche()} a été déclarée \inline{const}),
+ \item si la classe \inline{Complexe} possède un membre nommé \inline{re}, \inline{monTableau[i].re = 1;} permet de modifier la valeur du membre \inline{re} du $i$-ème nombre complexe du tableau (attention, il faut que \inline{monTableau.size() > i})
+\end{itemize}
+ 
+\begin{correction}
+On commence par inclure la bibliothèque \inline{<vector>}, et on s'assure d'utiliser l'espace de nom \inline{std}.
+\begin{minted}[breaklines]{c++}
+#include <vector>
+using namespace std;
+\end{minted}
+
+Ici on ne fait pas d'allocation de mémoire à la main; on déclare simplement un tableau automatique \inline{vector<Complexe>}. 
+\begin{minted}[breaklines]{c++}
+int main() 
+{
+  unsigned int N = 0;
+  cout << "N = ";
+  cin >> N;
+
+  vector<Complexe> nombres;
+\end{minted}
+
+Pour remplir le tableau avec $e^{\frac{2i\pi n}{N}}$, nous allons faire appel à la fonction \inline{exponentielle} ; nous créons donc d'abord le nombre complexe $0 + \frac{2i\pi n}{N}$, puis nous ajoutons l'exponentielle de ce nombre à la fin du tableau grâce à \inline{push_back}.
+\begin{minted}[breaklines]{c++}
+  for (unsigned int n = 0; n < N; ++n) {
+    Complexe nombre;
+    nombre.re = 0;
+    nombre.im = 2 * n * M_PI / N;
+    
+    nombres.push_back(exponentielle(nombre));
+  }
+\end{minted}
+
+Finalement, nous accédons aux parties réelles et imaginaire des nombres complexes du tableau afin de calculer leur somme
+\begin{minted}[breaklines]{c++}
+void main () {
+  Complexe somme;
+  somme.re = 0;
+  somme.im = 0;
+  
+  for (unsigned int n = 0; n < nombres.size(); ++n) {
+    // deux façons différentes d'accéder à un élément d'un vector :
+    somme.re += nombres[n].re;  // accès par indice
+    somme.im += nombres.at(n).im;   // accès avec la méthode .at(n), qui vérifie en plus si n est un indice valide et affiche une erreur sinon (plus sécurisé)
+  }
+
+  somme.affiche();
+
+  return 0;
+}
+\end{minted}
+On remarque que grâce à l'utilisation de la classe \inline{Complexe}, le code est plus court et plus simple. On verra plus tard que, avec la surcharge d'opérateurs, on pourra écrire un code encore plus concis.
+\end{correction}
+
+
+\end{document}

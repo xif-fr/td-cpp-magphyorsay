@@ -1,0 +1,400 @@
+\documentclass{book}
+\setlength{\parindent}{0cm}
+\usepackage[textwidth=17cm]{geometry}
+
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage{amsmath,amssymb}
+
+\usepackage{graphicx}
+\usepackage{psfrag}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{verbatim}
+
+\usepackage{minted}		% Coloration syntaxique
+\usepackage[T1]{fontenc}	% Style de ~ incorrect
+\usepackage{lmodern}		% Style de ~ incorrect
+%\usemintedstyle{upsud}
+\newcommand{\inline}[1]{\mintinline[breaklines]{c++}{#1}}
+
+% Meilleures couleurs
+\usepackage{xcolor}
+\definecolor{red}{RGB}{221,42,43}
+\definecolor{green}{RGB}{132,184,24}
+\definecolor{blue}{RGB}{0,72,112}
+\definecolor{orange}{RGB}{192,128,64}
+\definecolor{gray}{RGB}{107,108,110}
+
+\usepackage[onehalfspacing]{setspace}
+\setstretch{1.02}
+
+% Solutions encadrées
+\usepackage{tikz}
+\usepackage[framemethod=tikz]{mdframed}
+\newmdenv[
+  singleextra={
+    \fill[blue] (P) rectangle ([xshift=-15pt]P|-O);
+    \node[overlay,anchor=south east,rotate=90,font=\color{white}] at (P) {\sf\textbf{Correction}};
+  },
+  firstextra={
+    \fill[blue] (P) rectangle ([xshift=-15pt]P|-O);
+    \node[overlay,anchor=south east,rotate=90,font=\color{white}] at (P) {\sf\textbf{Correction}};
+  },
+  secondextra={
+    \fill[blue] (P) rectangle ([xshift=-15pt]P|-O);
+    \node[overlay,anchor=south east,rotate=90,font=\color{white}] at (P) {\sf\textbf{Correction}};
+  },
+  backgroundcolor=blue!2,
+  linecolor=blue,
+  skipabove=12pt,
+  skipbelow=12pt,
+  innertopmargin=0.4em,
+  innerbottommargin=0.4em,
+  innerrightmargin=2.7em,
+  rightmargin=0.7em,
+  innerleftmargin=1.7em,
+  leftmargin=0.7em,
+]{correction}
+
+% Pour cacher/montrer les solutions, décommenter/commenter les 3 lignes ci-dessous
+\usepackage{comment}
+% \renewenvironment{correction}{}{}
+% \excludecomment{correction}
+
+% Fancy chapters
+\makeatletter
+  \renewcommand{\@chapapp}{TD}
+\makeatother
+
+\usepackage{fancyhdr}
+\usepackage{fncychap}
+  \ChTitleVar{\Huge\bfseries\sffamily\color{blue}}
+  \ChNameVar{\raggedleft\fontsize{22}{16}\selectfont\sffamily\color{blue}}
+  \ChNumVar{\raggedleft\fontsize{60}{62}\selectfont\sffamily\color{blue}}
+
+% Fancy sections
+\usepackage{titlesec}
+\titlespacing*{\chapter}{0pt}{-50pt}{40pt}
+\titleformat{\section}[block]
+  {\Large\bfseries\sffamily\color{blue}}
+  {\thesection}
+  {1em}
+  {}
+
+\newmdenv[nobreak,backgroundcolor=red!20,roundcorner=10pt,linecolor=white]{warning}
+
+\newenvironment{prompt}{\begin{quote}\color{blue!75}\tt\$\,
+}{\end{quote}}
+
+\newcommand{\cc}{\mbox{C}}
+\newcommand{\cpp}{\mbox{C\vspace{.5em}\protect\raisebox{.2ex}{\footnotesize++~}}}
+
+\def\filename{\emph}
+
+\newcommand{\ham}{\mathcal{H}}
+\newcommand{\en}{\mathrm{E}}
+\newcommand{\ket}[1]{\left\vert#1\right\rangle}
+\newcommand{\bra}[1]{\left\langle#1\right\vert}
+\newcommand{\ps}[2]{\left\langle#1\middle\vert#2\right\rangle}
+\newcommand{\psop}[3]{\left\langle#1\middle\vert#2\middle\vert#3\right\rangle}
+\newcommand{\com}[2]{\left[#1,#2\right]}
+\newcommand{\avg}[1]{\left<#1\right>}
+\newcommand{\abs}[1]{\left|#1\right|}
+
+
+\newcommand{\diff}{\mathrm{d}}
+\newcommand{\ud}{\,\mathrm{d}}
+\newcommand{\Tr}{\mathrm{Tr}\,}
+\newcommand{\tr}{\mathrm{tr}\,}
+\newcommand{\im}{\mathrm{Im}\,}
+\newcommand{\re}{\mathrm{Re}\,}
+\newcommand{\nn}{\nonumber}
+\newcommand{\be}{\begin{equation}}
+\newcommand{\ee}{\end{equation}}
+\newcommand{\ba}{\begin{eqnarray}}
+\newcommand{\ea}{\end{eqnarray}}
+
+\renewcommand{\l}{\left}
+\renewcommand{\r}{\right}
+
+\graphicspath{{Figures/}}
+
+\usepackage{hyperref}
+
+\begin{document}
+\setcounter{chapter}{3}
+\chapter{\label{ch:surcharge}Surcharge d'opérateurs}
+
+Ce TD a pour but d'introduire la notion de surcharge d'opérateur afin de pouvoir écrire des expressions naturelles du type \inline{Complexe moinsUn = Complexe(0,1) * Complexe(0,1)}, et introduit l'utilisation du mot-clé \inline{this}.
+
+\section{Surcharge d'opérateurs}
+Surcharger les opérateurs binaires \inline{operator+}, \inline{operator-}, \inline{operator/}, \inline{operator*} et l'opérateur unaire \inline{Complexe operator-(Complexe)}. Il y a deux façons de faire :
+\begin{enumerate}
+\item Les opérateurs sont des fonctions et non des membres de la classe \texttt{Complexe}. Ils prennent donc tous leurs opérandes par argument. Exemple : \inline{Complexe operator+ (Complexe a, Complexe b)}. C'est la façon la plus intuitive. On pourra soit les déclarer à l'extérieur de la classe \inline{Complexe}, soit les déclarer comme fonctions amies\footnote{Rappel : Une fonction déclarée \inline{friend} n'est \emph{jamais} une fonction membre (même s'il faut la déclarer à l'intérieur de la classe), il ne font donc pas utiliser l'opérateur de résolution de portée \inline{Complexe::} lors de la définition. En revanche, une fonction \inline{friend} a accès aux membres \inline{public} et \inline{private} de la classe. Cela simplifie un peu l'implémentation.} (\inline{friend}) à l'intérieur de la classe \inline{Complexe}. On parle de \textit{non-member operator overloading}.
+\item Les opérateurs prennant en premier argument un \texttt{Complexe} peuvent être des méthodes membres de la classe \texttt{Complexe}. Le premier opérande est implicitement l'objet lui même, ie. \inline{*this}. Exemple : \inline{Complexe Complexe::operator+ (Complexe b) const}. On parle de \textit{member operator overloading}.
+\end{enumerate}
+Ces deux façons sont équivalentes dans la plupart des cas. Une exception : si \texttt{a} n'est pas un \texttt{Complexe} mais est \emph{convertible en \texttt{Complexe}}, l'opération sera valide avec du \textit{non-member overloading}, alors qu'elle ne le sera pas avec du \textit{member overloading}. En général, il faut imaginer les cas d'utilisation et choisir la façon qui ne pose le moins de problèmes. Dans notre cas, il n'y a pas de réelle différence. \\
+
+Surcharger également les opérateurs membres \inline{operator=},\inline{operator+=}, \inline{operator-=}, \inline{operator*=}, \inline{operator/=}. Ces opérateurs ont une signature du type ou \inline{Complexe& operator= (const Complexe&)}, et \emph{sont} des fonctions membres, il faut donc utiliser l'opérateur de résolution de portée \inline{Complexe::} lors de la définition. \\
+
+On reprendra les exercices 1.7 / 2.4 (somme d'exponentielles) des premiers TDs afin de tester les opérateurs surchargés.
+
+\begin{correction}
+
+\subsection*{Avec des fonctions amies, \textit{non-member overloading}}
+
+On modifie la classe \inline{Complexe} en rajoutant
+\begin{minted}[breaklines]{c++}
+class Complexe
+{
+public:
+  ...
+
+  // affectation de autre à soi
+  Complexe& operator= (Complexe& autre);
+  
+  // addition de `a' et `b'
+  friend Complexe operator+ (Complexe a, Complexe b);
+  // addition de `b' à soi
+  Complexe& operator+= (Complexe b);
+  // opposé de `c'
+  friend Complexe operator- (Complexe c);
+  // soustraction de `a' et `b'
+  friend Complexe operator- (Complexe a, Complexe b);
+  // soustraction de `b' à soi
+  Complexe& operator-= (Complexe b);
+  // multiplication de `a' par `b' (que `a' et `b' soient scalaires ou complexes)
+  friend Complexe operator* (Complexe a, Complexe b);
+  friend Complexe operator* (Complexe a, double b);
+  friend Complexe operator* (double a, Complexe a);
+  // multiplication de `b' à soi
+  Complexe& operator*= (Complexe b);
+  Complexe& operator*= (double b);
+  // division de `a' par `b' :
+  friend Complexe operator/ (Complexe a, Complexe b);
+  friend Complexe operator/ (Complexe a, double b);
+  friend Complexe operator/ (double a, Complexe b);
+  // division de soi par `b' :
+  Complexe& operator/= (Complexe b);
+  Complexe& operator/= (double b);
+
+};
+\end{minted}
+L'utilisation du mot-clé \inline{friend} permet si nécessaire d'avoir accès aux membres privés de \inline{Complexe}. Dans le cas où les membres sont totalement encapsulés (ie. tous \inline{private}), l'utilisation de \inline{friend} permet un accès immédiat à ces membres, permettant d'éviter de multiples appels aux \emph{getters} et \emph{setters}. Il faut garder que les fonctions amis ne sont \emph{pas} des méthodes, bien qu'elles soient déclarées à l'intérieur de la classe.
+
+\vspace{1em}
+
+Pour toutes les méthodes ci-dessus, il est possible (et même recommandé pour éviter des copies inutiles) de prendre les objets \inline{Complexe} par référence constante :
+\begin{minted}[breaklines]{c++}
+class Complexe
+{
+public:
+  ...
+  friend Complexe operator+ (const Complexe&, const Complexe&);
+  friend Complexe operator- (const Complexe&);
+  ...
+  Complexe& operator= (const Complexe&);
+};
+\end{minted}
+Toutefois, par souci de clarté, on a gardé un passage par copie dans cette correction. Un objet de type \inline{Complexe} ne prennant que $2\times 8$ octets (contre $8$ pour un pointeur), la différence de performance est probablement peu perceptible, d'autant plus que le compilateur effectue certaines optimisations.
+
+\vspace{1em}
+
+L'implémentation est immédiate grâce au constructeur :
+
+\begin{minted}[breaklines]{c++}
+// Bien que déclaré dans la classe Complexe operator+ n'est pas un membre de Complexe, à cause du mot-clé friend
+Complexe operator+ (Complexe a, Complexe b) {
+  return Complexe(a.p_real + b.p_real, a.p_imag + b.p_imag);
+}
+
+// operator= est un membre de Complexe, donc il faut utiliser Complexe:: pour le définir
+Complexe& Complexe::operator= (const Complexe& autre) {
+  p_real = autre.p_real;
+  p_imag = autre.p_imag;
+  return *this;
+}
+
+// On peut utiliser les autres opérateurs déjà définis pour en définir d'autres
+Complexe& Complexe::operator+= (const Complexe& autre) {
+  *this = *this + autre;
+  return *this;
+}
+\end{minted}
+
+Notons que l'implémentation de l'opérateur d'affectation \inline{operator=} est triviale. On aurait très bien pu laisser le compilateur le définir par défaut (tout comme un constructeur par copie) :
+\begin{minted}[breaklines]{c++}
+class Complexe
+{
+public:
+  ...
+  Complexe (const Complexe&) = default;
+  Complexe& operator= (const Complexe&) = default;
+};
+\end{minted}
+
+\subsection*{Sans fonctions amies, \textit{non-member overloading}}
+
+Ici, on choisit de ne pas faire de fonctions amies. On déclare donc de simples fonctions à l'extérieur de la classe :
+
+\begin{minted}[breaklines]{c++}
+class Complexe
+{
+public:
+  ...
+  // affectation de autre à soi
+  Complexe& operator= (Complexe& autre);
+  
+  // addition de `b' à soi
+  Complexe& operator+= (Complexe b);
+  // soustraction de `b' à soi
+  Complexe& operator-= (Complexe b);
+  // multiplication de `b' à soi
+  Complexe& operator*= (Complexe b);
+  Complexe& operator*= (double b);
+  // division de soi par `b' :
+  Complexe& operator/= (Complexe b);
+  Complexe& operator/= (double b);
+  ...
+};
+
+// addition de `a' et `b'
+Complexe operator+ (Complexe a, Complexe b);
+// opposé de `c'
+Complexe operator- (Complexe c);
+// soustraction de `a' et `b'
+Complexe operator- (Complexe a, Complexe b);
+// multiplication de `a' par `b' (que `a' et `b' soient scalaires ou complexes)
+Complexe operator* (Complexe a, Complexe b);
+Complexe operator* (Complexe a, double b);
+Complexe operator* (double a, Complexe a);
+// division de `a' par `b' :
+Complexe operator/ (Complexe a, Complexe b);
+Complexe operator/ (Complexe a, double b);
+Complexe operator/ (double a, Complexe b);
+\end{minted}
+
+L'implémentation est alors :
+
+\begin{minted}[breaklines]{c++}
+Complexe& Complexe::operator+= (const Complexe& autre) {
+  p_real += autre.p_real;
+  p_imag += autre.p_imag;
+  return *this;
+}
+
+Complexe operator+ (Complexe a, Complexe b) {
+  a += b;
+  return a;
+}
+\end{minted}
+Ici, on a pris l'argument \inline{a} par copie, on peut donc le modifier sans rirsque de modifier la variable de l'utilisateur !
+
+Noter que l'on a renversé les rôles par rapport aux fonctions amies : c'est \inline{operator+} qui utilise \inline{operator+=} et non l'inverse. En effet, la fonction n'étant pas amie, elle n'a pas accès aux attributs, et il est alors plus simple d'utiliser la méthode \inline{operator+=}.
+
+\subsection*{Une troisième façon de faire : \textit{member overloading}}
+
+On peut aussi déclarer l'addition, la soustraction, la multiplication par un scalaire... comme méthodes constantes de la classe, comme ceci :
+
+\begin{minted}[breaklines]{c++}
+class Complexe
+{
+public:
+  ...
+  // affectation de autre à soi
+  Complexe& operator= (Complexe& autre);
+  
+  // addition de `a' et `b'
+  Complexe operator+ (Complexe b) const;
+  // addition de `b' à soi
+  Complexe& operator+= (Complexe b);
+  // opposé de `c'
+  Complexe operator- () const;
+  // soustraction de `a' et `b'
+  Complexe operator- (Complexe b) const;
+  // soustraction de `b' à soi
+  Complexe& operator-= (Complexe b);
+  // multiplication de `a' par `b' (que `a' et `b' soient scalaires ou complexes)
+  Complexe operator* (Complexe b) const;
+  Complexe operator* (double b) const;
+  // multiplication de `b' à soi
+  Complexe& operator*= (Complexe b);
+  Complexe& operator*= (double b);
+  // division de `a' par `b' :
+  Complexe operator/ (Complexe b) const;
+  Complexe operator/ (double b) const;
+  // division de soi par `b' :
+  Complexe& operator/= (Complexe b);
+  Complexe& operator/= (double b);
+
+  ...
+};
+
+// multiplication de `a' par `b' (cas où `a' n'est pas un Complexe)
+Complexe operator* (double a, Complexe b);
+// division de `a' par `b' (cas où `a' n'est pas un Complexe)
+Complexe operator/ (double a, Complexe b);
+\end{minted}
+
+La multiplication ou division d'un \inline{double} par un \inline{Complexe} ne peuvent être des méthodes de la classe \inline{Complexe} car elles "agissent sur un \inline{double}", pas un \inline{Complexe}. Autement dit, seules les fonctions dont le premier argument \texttt{a} était un \inline{Complexe} peuvent être transformées en méthodes constantes.
+
+L'implémentation est alors :
+\begin{minted}[breaklines]{c++}
+Complexe& Complexe::operator+= (const Complexe& autre) {
+  p_real += autre.p_real;
+  p_imag += autre.p_imag;
+  return *this;
+}
+
+// operator+ est ici un membre de Complexe, donc il faut utiliser Complexe:: pour le définir
+Complexe Complexe::operator+ (Complexe b) const {
+  b += *this;
+  return b;
+}
+\end{minted}
+
+Noter que l'on a renversé les rôles : c'est \inline{operator+} qui utilise \inline{operator+=} et non l'inverse. 
+
+\end{correction}
+
+%-----------------------------------------------------------
+
+\section{L'opérateur de flux \mintinline{c++}{<<}}
+L'opérateur de flux \inline{operator<<} peut également être surchargé pour pouvoir écrire
+\begin{minted}[breaklines]{c++}
+Complexe i(0,1);
+cout << i << endl;
+\end{minted}
+La signature à utiliser est \inline{std::ostream& operator<< (std::ostream& out, const Complexe& nombre)}. En effet, \inline{std::cout} est un objet de type \inline{std::ostream} spécialement implémenté pour afficher dans la console\footnote{D'ailleurs, \inline{std::ofstream} étant aussi de type \inline{std::ostream}, cette surcharge de \inline{operator<<} fonctionnera aussi pour l'écriture de fichiers. Même chose pour \inline{std::ostringstream}.}. Une fois cet opérateur surchargé, on prendra soin de tester tous les opérateurs précédemment surchargés.
+
+\begin{correction}
+D'abord, assurons-nous que le type \inline{ostream} est déclaré, via
+\begin{minted}[breaklines]{c++}
+#include <ostream>
+\end{minted}
+Ensuite il faut déclarer l'opérateur de flux via
+\begin{minted}[breaklines]{c++}
+std::ostream& operator<< (std::ostream& out, const Complexe& nombre);
+\end{minted}
+Nous ne sommes pas obligés de déclarer cette fonction dans la classe \inline{Complexe} précédée du mot-clé \inline{friend} car pour afficher un nombre complexe dans la console nous pouvons nous contenter d'utiliser les membres \inline{public} de la classe. (De manière générale, quand on affiche un objet dans la console, on n'a pas besoin d'afficher des informations qui ne sont pas visibles par l'utilisateur, ie. \inline{private}.)
+
+On notera l'utilisation de \inline{std::} car utiliser \inline{using namespace} à l'intérieur d'un fichier \filename{*.h} est une très mauvaise idée, et doit être évité, sinon, tous les fichiers qui incluent ce fichier \emph{*.h} subiront automatiquement l'usage de cet espace de nom.
+
+Finalement, une possible implémentation de l'opérateur de flux peut-être
+\begin{minted}[breaklines]{c++}
+ostream& operator<< (ostream& out, const Complexe& nombre) {
+  if (nombre.imag() >= 0) {
+    out << nombre.real() << " + " << nombre.imag() << "i";
+  } else {
+    out << nombre.real() << " - " << -nombre.imag() << "i";
+ }
+ return out;
+}
+\end{minted}
+Ici, nous n'avons plus besoin d'utiliser \inline{std::} car nous sommes dans un fichier source \filename{*.cpp} dans lequel on aura pris soin d'insérer \inline{using namespace std;}. Ce n'est pas un problème ici, car un fichier \filename{*.cpp} ne peut pas être inclus dans un autre, donc l'instruction \inline{using namespace std;} a de l'effet uniquement à l'intérieur de ce fichier.
+\end{correction}
+
+
+
+\end{document}
