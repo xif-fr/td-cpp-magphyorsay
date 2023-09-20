@@ -138,7 +138,7 @@ Ce premier TD porte sur des fonctionnalités de base du langage \cpp (et sur leu
   \item se (re)familiariser avec les espaces de nom (namespace) et avec la bibliothèque \inline{<iostream>} pour afficher des messages dans la console via \inline{std::cout} 
   \item se familiariser avec la surdéfinition de fonctions
   \item comprendre la différence entre le passage par valeur et par référence (ou adresse)
-  \item se familiariser avec les opérateurs \inline{new} et \inline{delete[]} du \cpp pour l'allocation dynamique de mémoire
+  \item se familiariser avec les opérateurs \inline{new[]} et \inline{delete[]} du \cpp pour l'allocation dynamique de mémoire
   \item réviser la construction de la boucle \inline{for}
   \item se familiariser avec l'utilisation de la \inline{std::vector}
 \end{itemize}
@@ -186,17 +186,8 @@ somme des couples de lapins lors des deux moins précédents.\\
 entiers non signé \inline{unsigned int}.
 
 \item Tester l'appel de chacune des deux fonctions en changant le type de l'argument fourni (utiliser un \textit{cast}, par exemple \inline{(unsigned short)42}; ou passer des variables de type différent). À partir de quelle valeur numérique de \texttt{n} la valeur retournée diffère-t-elle ? Pourquoi ? Supprimer la version \inline{unsigned short}, qui ne sera plus nécessaire.
-
-\item Au sein du programme principal, réaliser \(N\gg1\) fois le calcul de la fonction
-de Fibonacci et estimer le temps d'exécution nécessaire au programme \emph{via} la
-commande unix \texttt{time ./nom\_executable}.
-
-\item Concevoir et implémenter une fonction \inline{rfibonacci(unsigned int)} proposant une solution récursive au calcul de la suite de Fibonacci. De même, mesurer le temps d'exécution pour la même valeur que \texttt{n}. Pourquoi est-il différent ?
-  
-\item Déporter la fonction récursive \texttt{rfibonacci}, qu'on aura renommée en \texttt{fibonacci}, dans une paire de fichiers : un premier fichier d'en-tête nommé \texttt{fibonacci.h} comprenant la déclaration (prototype) de la fonction et un second fichier source \texttt{fibonacci.cpp}, implémentant cette fonction. Modifier le programme principal afin d'utiliser cette fonction recursive et commenter provisoirement la fonction \texttt{fibonacci} itérative. Compiler et tester l'exécution.
-
-\item Finalement, décommenter la version itérative de \texttt{fibonacci} \emph{i.e.} celle contenue dans le fichier source principal et définie au début de cette exercice. Chercher à résoudre l'erreur de compilation en utilisant un espace de nom \inline{espace_local} et tester le programme en forçant le choix de fonction à utiliser \emph{via} l'opérateur de portée \inline{espace_local::}.
 \end{enumerate}
+
 
 \begin{correction}
 \subsubsection{Surdéfinition de fonctions}
@@ -254,7 +245,7 @@ distinguer quelle fonction appeler.
 
 La suite de Fibonacci divergeant rapidement, il est important de noter qu'en
 fonction du type retourné le résultat de ces deux fonctions ne sera plus valide
-à partir d'un certain ordre. Ainsi dès le 25\(^{\text{ème}}\) ordre, celle retournant un \texttt{unsigned short} donnera un résultat erroné ((\(\mathcal{F}_{25}=\)75025) car les valeurs du type \texttt{unsigned short} sont
+à partir d'un certain ordre. Ainsi dès le 25\(^{\text{ème}}\) ordre, celle retournant un \texttt{unsigned short} donnera un résultat erroné ($\mathcal{F}_{25}=75025$ car les valeurs du type \texttt{unsigned short} sont
 comprises entre $0$ et $2^{16}\!-\!1$ \emph{cf.} table \ref{tab:orgtable1}). 
 
 \begin{center}
@@ -276,7 +267,21 @@ unsigned short & 2 octets & 0 à 65 535\\
 \end{tabular}
 \end{center}
 \captionof{table}{\textbf{Taille en mémoire et intervalle de valeurs de certains types entiers du C/\cpp}}
+\end{correction}
 
+
+\begin{enumerate}
+\setcounter{enumi}{3}
+\item Au sein du programme principal, réaliser \(N\gg1\) fois le calcul de la fonction de Fibonacci (pour un $n$ donné) et estimer le temps d'exécution nécessaire au programme \emph{via} la commande unix \texttt{time ./nom\_executable}. Mesurer ce temps pour quelques valeurs de $n$. Quelle est la dépendance du temps d'exécution à $n$ ?
+
+\item Concevoir et implémenter une fonction \inline{rfibonacci(unsigned int)} proposant une solution récursive au calcul de la suite de Fibonacci (c'est-à-dire sans boucle, implémentant directement la relation de récurrence). De même, mesurer le temps d'exécution pour la même valeur que \texttt{n}. Pourquoi est-il différent ? De même, quelle est sa dépendance à $n$ ? Il est probable que votre programme plante pour des valeurs même modestes de $n$. Tentez de donner une explication.
+  
+\item Déporter la fonction récursive \texttt{rfibonacci}, qu'on aura renommée en \texttt{fibonacci}, dans une paire de fichiers : un premier fichier d'en-tête nommé \texttt{fibonacci.h} comprenant la déclaration (prototype) de la fonction et un second fichier source \texttt{fibonacci.cpp}, implémentant cette fonction. Modifier le programme principal afin d'utiliser cette fonction recursive et commenter provisoirement la fonction \texttt{fibonacci} itérative. Compiler et tester l'exécution.
+
+\item Finalement, décommenter la version itérative de \texttt{fibonacci} \emph{i.e.} celle contenue dans le fichier source principal et définie au début de cette exercice. Chercher à résoudre l'erreur de compilation en utilisant un espace de nom \inline{espace_local} et tester le programme en forçant le choix de fonction à utiliser \emph{via} l'opérateur de portée \inline{espace_local::}.
+\end{enumerate}
+
+\begin{correction}
 \subsubsection{Estimation du temps d'exécution d'un programme}
 
 Afin d'estimer le temps d'exécution de la fonction \texttt{fibonacci}, nous modifions le
@@ -339,7 +344,7 @@ unsigned int rfibonacci(unsigned int n) {
 
 On note bien que le corps de la fonction \texttt{rfibonacci} réalise deux appels à cette
 même fonction. La condition de sortie se fait dans l'hypothèse où \texttt{n} est
-inférieur à 2 auquel cas la valeur retournée sera 1. On imagine bien qu'à cause du double appel, le temps d'exécution sera exponentiel. En effet, la complexité asymptotique est en $\mathcal{O}(\Phi^n)$, où $\Phi=\frac{\sqrt{5}+1}{2}\approx 1.62$ est le nombre d'or. Alors qu'elle était clairement linéaire ($\mathcal{O}(n^1)$) pour la version itérative.
+inférieur à 2 auquel cas la valeur retournée sera 1. On imagine bien qu'à cause du double appel, le temps d'exécution sera exponentiel. En effet, la complexité asymptotique est en $\mathcal{O}(\Phi^n)$, où $\Phi=\frac{\sqrt{5}+1}{2}\approx 1.62$ est le nombre d'or. Alors qu'elle était clairement linéaire ($\mathcal{O}(n^1)$) pour la version itérative.\\
 
 Il est possible de condenser encore plus l'écriture de cette fonction :
 
@@ -466,6 +471,8 @@ fonctions mathématiques qu'on pourra naturellement encapsuler dans un espace
 \texttt{math} afin d'éviter d'éventuel conflit de nom.
 \end{correction}
 
+% \renewenvironment{correction}{}{}
+% \excludecomment{correction}
 
 \section{Déclaration de fonctions}
 
@@ -698,8 +705,11 @@ double * pt_tabular;
 int n_value;
 printf("Combien de valeurs souhaitez vous allouer en mémoire ?");
 scanf("%d", &n_value);
-pt_tabular = (double *) malloc (sizeof(double) * n_value);
-free(pt_tabular);
+if (n_value > 0) {
+  pt_tabular = (double *) malloc (sizeof(double) * n_value);
+  pt_tabular[n_value-1] = 0;
+  free(pt_tabular);
+}
 \end{minted}
 
 On utilisera \inline{std::cin}, qui est défini dans \inline{<iostream>} et dont on trouvera la documentation \href{https://en.cppreference.com/w/cpp/io/cin}{ici}.
@@ -710,8 +720,11 @@ On utilisera \inline{std::cin}, qui est défini dans \inline{<iostream>} et dont
 int n_value = 0;
 cout << "Combien de valeurs souhaitez vous allouer en mémoire ? ";
 cin >> n_value;
-double * pt_tabular = new double[n_value];
-delete[] pt_tabular;
+if (n_value > 0) {
+  double * pt_tabular = new double[n_value];
+  pt_tabular[n_value-1] = 0;
+  delete[] pt_tabular;
+}
 \end{minted}
 
 Le code ci-dessus en plus d'utiliser les opérateurs \texttt{new} et \texttt{delete} en lieu et
@@ -727,8 +740,8 @@ par le biais de l'opérateur \texttt{delete[]}.
 \section{Allocation et dé-allocation de mémoire} \label{ex:sum_exp}
 
 Pour vérifier que la fonction \inline{exponentielle} écrite à l'exercice \ref{ex:exp} donne des résultats corrects, on va utiliser le fait que $\sum_{n=0}^{N-1} 
-e^{\frac{2i\pi n}{N}} = 0$ quel que soit $N$ un entier positif supérieur à 1. Écrire un programme qui invite l'utilisateur à enter $N$ (on utilisera \inline{std::cin >> N;}), alloue un tableau de \inline{double} contenant la partie réelle de 
-$e^{\frac{2i\pi n}{N}}$ et un  deuxième tableau contenant la partie imaginaire, valeurs qui seront calculées dans une première boucle \inline{for}. Une deuxième 
+\mathrm{e}^{\frac{2\mathrm{i}\pi n}{N}} = 0$ quel que soit $N$ un entier positif supérieur à 1. Écrire un programme qui invite l'utilisateur à enter $N$ (on utilisera \inline{std::cin >> N;}), alloue un tableau de \inline{double} contenant la partie réelle de 
+$\mathrm{e}^{\frac{2\mathrm{i}\pi n}{N}}$ et un  deuxième tableau contenant la partie imaginaire, valeurs qui seront calculées dans une première boucle \inline{for}. Une deuxième 
 boucle \inline{for} servira à faire la somme. Enfin, le programme affichera le résultat.
 
 \begin{correction}
@@ -741,8 +754,8 @@ int main()
   cout << "N = ";
   cin >> N;
 
-  double * re = new double [N];
-  double * im = new double [N];
+  double * re = new double[N];
+  double * im = new double[N];
 
   for (unsigned int n = 0; n < N; ++n) {
     exponentielle_par_reference(0, 2 * n * M_PI / N, re[n], im[n]);
@@ -756,20 +769,33 @@ int main()
 
   affiche_complexe(re_result, im_result);
 
-  delete [] re;
-  delete [] im;
+  delete[] re;
+  delete[] im;
 
   return 0;
 }
 \end{minted}
-On pourra noter que les variables \inline{re[n]} et \inline{im[n]} sont directement passées par référence à la fonction \inline{exponentielle_par_reference} : en effet ce sont des variables de type \inline{double}. (Une règle pratique pour savoir si une variable peut-être passée en tant que référence est que l'expression \inline{re[n] = ...;} est valide, et que \inline{re[n]} existe toujours après l'appel de \inline{exponentielle_par_reference}). On remarquera aussi que les variables sont déclarées le plus proche possible de leur utilisation (en particulier, les variables \inline{unsigned int n;} sont déclarées dans la boucle \inline{for}). 
+
+On pourra noter que les variables \inline{re[n]} et \inline{im[n]} sont passées par référence à la fonction\linebreak \inline{exponentielle_par_reference}. Ce sont en effet des variables (de type \inline{double}). Règle pratique pour savoir si une expression \inline{x} (ici \inline{re[n]}) peut être passée en tant que référence : l'instruction\linebreak \inline{x = ...;} doit est valide (on parle de \textit{left-value}, ou \textit{lvalue}).\\
+
+On remarquera aussi que les variables sont déclarées le plus proche possible de leur utilisation (en particulier, les variables \inline{unsigned int n} sont déclarées dans la boucle \inline{for}). 
 \end{correction}
 
 %-----------------------------------------------
 
 \section{\mintinline{c++}{std::vector<double>}}
 
-Dans l'exercice précédent, nous avons manuellement alloué puis dé-alloué un tableau. La bibliothèque standard contient des objets qui permettent d'automatiser cette gestion de la mémoire : les objets \inline{std::vector<type>} de \href{http://en.cppreference.com/w/cpp/header/vector}{\inline{<vector>}}. Ré-écrire le programme de l'exercice précédent en utilisant \inline{std::vector<double>}, soit avec la méthode \texttt{push\_back}, soit en créant un tableau de la bonne taille dès le début.
+\emph{Pré-requis : cours 3 sur la bibliothèque standard.}\\
+
+Dans l'exercice précédent, nous avons manuellement alloué puis dé-alloué un tableau. La bibliothèque standard contient des objets qui permettent d'automatiser cette gestion de la mémoire : les objets \inline{std::vector<type>} de \href{http://en.cppreference.com/w/cpp/header/vector}{\inline{<vector>}}. Ré-écrire le programme de l'exercice précédent en utilisant \inline{std::vector<double>}, soit avec la méthode \texttt{push\_back}, soit en créant un tableau de la bonne taille dès le début.\\
+
+Rappel de méthodes qui peuvent être utiles :
+\begin{itemize}
+ \item \inline{vector<double> monTableau;} pour déclarer un objet de type \inline{vector<double>} (un tableau contigu de taille variable contenant des \inline{double}), qui sera vide par défaut.
+ \item \inline{monTableau.push_back(nombre)} pour rajouter un nombre à la fin du tableau. La taille du tableau est ajustée automatiquement.
+ \item \inline{monTableau.size()} pour connaître le nombre d'éléments dans le tableau, de type \inline{unsigned int}.
+ \item \inline{monTableau[n]} ou \inline{monTableau.at(n)} pour accéder ou modifier le \texttt{n}ème élément (toujours en partant de 0) du tableau. Attention, il faut que \inline{n < monTableau.size()}, sinon on risque une erreur de segmentation (avec \inline{operator[]}) ou une exception (avec \inline{at()}).
+\end{itemize}
 
 \begin{correction}
 On n'oublie pas d'inclure la bibliothèque \inline{<vector>}
@@ -778,8 +804,12 @@ On n'oublie pas d'inclure la bibliothèque \inline{<vector>}
 \end{minted}
 
 Il faut remplacer l'allocation de mémoire par la déclaration de deux \inline{vector<double>}. Pour rajouter un élément à un \inline{vector}, il faut utiliser 
-la fonction \inline{push_back}. L'accès au $n$-ième élément de \inline{vector<double> monVector;} peut être réalisé de deux manières, soit avec la fonction 
-\inline{monVector.at(n)}, soit avec l'opérateur \inline{[](int index)} : \inline{monVector[n]}. Dans les deux cas, il faut que \inline{monVector.size() > n}.
+la fonction \inline{push_back}. L'accès au $n$-ième élément de \inline{vector<double> tableau;} peut être réalisé de deux manières :
+\begin{itemize}
+  \item soit avec la méthode \inline{tableau.at(n)}
+  \item soit avec l'opérateur \inline{[](int index)}, c'est-à-dire \inline{tableau[n]}
+\end{itemize}
+Dans les deux cas, il faut que \inline{n < tableau.size()}\footnote{Si $n>\;$\inline{tableau.size()}, le comportement des deux méthodes est différent. L'opérateur \inline{[](int)} n'effectue aucune vérification, et une erreur de segementation se produira peut être ou peut être pas. Au contraire, la méthode \inline{at(int)} effectue la vérification, et lance toujours une exception lorsque $n$ dépasse la taille du tableau.}.
 \begin{minted}[breaklines]{c++}
 void main() {
   unsigned int N = 0;
@@ -805,7 +835,7 @@ void main() {
   affiche_complexe(re_result, im_result);
 }
 \end{minted}
-On remarque que les opérateurs \inline{new} et \inline{delete[]} ne sont plus présents dans le code.\\
+On remarque que les opérateurs \inline{new[]} et \inline{delete[]} ne sont plus présents dans le code.\\
 
 Une autre facon de faire consiste à utiliser initialiser le vecteur avec \texttt{N} éléments dès le début, en utilisant le \href{https://en.cppreference.com/w/cpp/container/vector/vector}{\textit{constructeur}} \inline{std::vector<double>(size_type count)}. On peut aussi utiliser la méthode \inline{resize()} de l'objet \inline{std::vector<double>}, qui fait en sorte que le \inline{vector} contienne exactement le nombre demandé d'élément. Le code est alors plus concis :
 
