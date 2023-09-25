@@ -1133,6 +1133,7 @@ ostream& operator<< (ostream& out, const complexe& nombre) {
 
 %-----------------------------------------------------------------------------------
 
+\newpage
 \section{Méthode de Newton et fractales}
 
 Concluons ce TD par une étude des propriétés de convergence de la méthode de Newton.\\
@@ -1155,7 +1156,7 @@ z_{n+1} = z_n - \frac{f(z_n)}{f'(z_n)}
 \end{equation*}
 en espérant converger vers un point fixe de cette relation de récurrence. Il est immédiat de voir que les points fixes de cette relation sont les zéros $z_\star$ de la fonction ($f(z_\star)=0$).
 
-\begin{figure}[h!]
+\begin{figure}[H]
 \centering
 \includegraphics[width=0.5\linewidth]{TD2/newton_iteration.pdf}
 \caption{Illustration d'une itération de la méthode de Newton sur une fonction réelle.}
@@ -1216,7 +1217,7 @@ N'hésitez pas à temporairement ajouter un affichage des valeurs durant l'itér
 \begin{correction}
 Implémentation possible :
 
-\begin{minted}[breaklines]{c++}
+\begin{minted}[breaklines,samepage]{c++}
 #include <iostream>
 
 std::tuple<complexe,int> methode_newton (fonc_complexe_t f, fonc_complexe_t f_deriv, complexe z, unsigned int max_it, double epsilon, bool debug = false) {
@@ -1267,9 +1268,11 @@ int main () {
 Pour $f(z)=(z-1)^2$, la convergence vers le zéro $z_\star=1$ est plus lente car $f'(z_\star) = 0$. On ne gagne qu'un chiffre de précision toutes les $\sim 4$ itérations. Autrement dit, la convergence est "seulement" exponentielle au lieu de super-exponetielle.
 \end{correction}
 
+%--------------------------
+
 \subsection{Comportement fractal}
 
-Dans la suite, nous allons étudier ce que donne la méthode de Newton sur un polynôme. Prenons par exemple $f(z)=z^3-1$, qui est un grand classique. Combien de zéro possède-t-il sur $\mathbb{C}$, et quels sont-ils ? Libre à vous d'en étudier un autre, ou même une fonction plus exotique, à conditions que vous connaissiez ses zéros.
+Dans la suite, nous allons étudier ce que donne la méthode de Newton sur un polynôme. Prenons par exemple $f(z)=z^3-1$, qui est un grand classique. Combien de zéro possède-t-il sur $\mathbb{C}$, et quels sont-ils ? Libre à vous d'en étudier un autre, ou même une fonction plus exotique, à conditions que vous connaissiez ses zéros.\\
 
 \begin{correction}
 De façon générale, les zéros de $f(z)=z^n-1$ sont les racines n-èmes de l'unité, $\{ \mathrm{e}^{2\pi \mathrm{i}\,k/n} \}_{0\leq k < n}$, au nombre de $n$. Pour $f(z)=z^3-1$, on a donc
@@ -1288,7 +1291,7 @@ Mettez-vous proche de $z_0=0$ et variez légèrement cette valeur de départ dan
 
 Pour y voir un plus clair, nous allons parcourir $z_0$ de façon systématique sur une grille de taille $N\times N$ maillant $\{x+\mathrm{i}y,\ x\in[-a,+a],\ y\in[-a,+a]\}$, et afficher le résultat avec matplotlib. Nous allons numéroter chaque zéro ainsi que lui définir une couleur, afin d'afficher une carte des bassins de convergence (ie. l'ensemble des points qui convergent vers un zéro donné).\\
 
-Pour chaque point de la grille, exécutez la méthode de Newton et déterminez sur quel zéro la méthode a convergé. Choisissez $-1$ lorsqu'il n'y a pas eu convergence. Pour stocker les résultats, au lieu de définir des matrices dans notre programme, nous pouvons écrire directement dans un fichier lisible par \texttt{numpy.loadtxt}. Écrivez donc le numéro du zéro obtenu au fur et à mesure dans un fichier, en respectant le format demandé par \texttt{numpy.loadtxt} (c'est à dire une grille, avec des espaces horizontalement et des retours à la ligne verticalement). Compilez avec le flag \texttt{-O3} pour activer les optimisations du compilateur.
+Pour chaque point de la grille, exécutez la méthode de Newton et déterminez sur quel zéro la méthode a convergé. Choisissez $-1$ lorsqu'il n'y a pas eu convergence. Pour stocker les résultats, au lieu de définir des matrices dans notre programme, nous pouvons écrire directement dans un fichier lisible par \texttt{numpy.loadtxt}. Écrivez donc le numéro du zéro obtenu au fur et à mesure dans un fichier, en respectant le format demandé par \texttt{numpy.loadtxt} (c'est à dire une grille, avec des espaces horizontalement et des retours à la ligne verticalement). Compilez avec le flag \texttt{-O3} pour activer les optimisations du compilateur.\\
 
 \begin{correction}
 On a simplement à effectuer deux boucles imbriquées, en effectuant des pas $da=a/N$ sur la partie réelle et imaginaire de $z_0$ :
@@ -1337,7 +1340,7 @@ Note : nous avons omis \inline{fichier_bassins_converg.close()}. C'est tout à f
 
 Avec Python, lire la grille résultante et la transformer en une image RBG, c'est-à-dire une grille de taille \inline{(N,N,3)}. Ainsi, \inline{img[42,24,:]} correspond au pixel $(42,24)$, et vaut \inline{[r,g,b]} où \texttt{r}, \texttt{g}, \texttt{b} sont entre $0$ et $1$ (\inline{[0,0,0]} pour du noir, \inline{[1,1,1]} pour du blanc). Pour les points qui n'ont pas convergés, choisir du noir par exemple. Astuce : forcer \texttt{dtype=int} pour \texttt{numpy.loadtxt} et utiliser des constructions du type \inline{img[ carte == ..., : ]} pour générer l'image. Ensuite, \inline{plt.imshow} permet d'afficher directement cette image. On prendra soin d'utiliser l'argument \texttt{extent} pour mettre les axes à la bonne échelle.\\
 
-On obtient une magnifique fractale, la \emph{fractale de Newton}. Une caractéristique typique des fractales est l'auto-similarité. Vérifiez que notre fractale est bien auto-similaire, par exemple en dézoomant ou en zoomant autour du point $z_0=0$, et en zoomant encore, et encore, et encore...
+On obtient une magnifique fractale, la \emph{fractale de Newton}. Une caractéristique typique des fractales est l'auto-similarité. Vérifiez que notre fractale est bien auto-similaire, par exemple en dézoomant ou en zoomant autour du point $z_0=0$, et en zoomant encore, et encore, et encore...\\
 
 \begin{correction}
 \begin{minted}[breaklines,samepage]{python}
@@ -1386,7 +1389,7 @@ plt.imshow(Nit, extent=[-a,a,-a,a], cmap='gnuplot2', vmin=3, vmax=25)
 
 \subsection{Amortissement [bonus]}
 
-Avec le polynôme $z^3-1$, on observe une convergence de la méthode de Newton presque partout. Mais il n'est pas garanti que ça soit toujours le cas. Étudions $f(z)=z^4-2z^2-1$. Combien de zéros ce polynôme a-t-il ? Au lieu de déterminer les zéros à la main, on va laisser notre programme le faire... puisque c'est justement l'utilité de la méthode de Newton. Modifiez le programme pour découvrir les zéros au fil du parcours de la grille. Retracez une carte des bassins de convergence pour ce nouveau polynôme. Avons-nous toujours convergence (quelque soit \inline{max_it}) partout ?
+Avec le polynôme $z^3-1$, on observe une convergence de la méthode de Newton presque partout. Mais il n'est pas garanti que ça soit toujours le cas. Étudions $f(z)=z^4-2z^2-1$. Combien de zéros ce polynôme a-t-il ? Au lieu de déterminer les zéros à la main, on va laisser notre programme le faire... puisque c'est justement l'utilité de la méthode de Newton. Modifiez le programme pour découvrir les zéros au fil du parcours de la grille. Retracez une carte des bassins de convergence pour ce nouveau polynôme. Avons-nous toujours convergence (quelque soit \inline{max_it}) partout ?\\
 
 \begin{correction}
 Remplaçons notre tableau statique de zéros par un tableau dynamique :
