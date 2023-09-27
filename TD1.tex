@@ -471,9 +471,6 @@ fonctions mathématiques qu'on pourra naturellement encapsuler dans un espace
 \texttt{math} afin d'éviter d'éventuel conflit de nom.
 \end{correction}
 
-% \renewenvironment{correction}{}{}
-% \excludecomment{correction}
-
 \section{Déclaration de fonctions}
 
 Déclarer puis définir une fonction \inline{affiche_complexe} qui prend en arguments la partie réelle et la partie imaginaire d'un nombre complexe et qui affiche le nombre complexe sous forme "$a+\mathrm{i}b$" dans la console. Afficher en notation scientifique avec 2 chiffres après la virgule en utilisant \inline{std::scientific} et \inline{std::ios_base::precision} (on trouvera un exemple \href{https://cplusplus.com/reference/ios/ios_base/precision/}{ici}).
@@ -693,8 +690,6 @@ int main()
 Le passage par valeur ne donne pas le bon résultat car les variables à l'intérieur de \mintinline[breaklines,breakafter=_]{c++}{exponentielle_par_valeur} contiennent seulement des copies des valeurs passées à la fonction. Donc dans la fonction \mintinline[breaklines,breakafter=_]{c++}{exponentielle_par_valeur}, \inline{re_result} contient 0 (qui est la valeur de \inline{a1} au moment de l'appel de la fonction), mais la modification de \inline{re_result} n'a aucun effet sur  \inline{a1}. Dans la fonction \mintinline[breaklines,breakafter=_]{c++}{exponentielle_par_reference}, \inline{re_result} est en fait \inline{a2}, donc modifier \inline{re_result} revient de fait à modifier directement \inline{a2}.
 \end{correction}
 
-
-
 \section{Opérateurs \texttt{new} et \texttt{delete}}
 
 Écrire en \cpp, en utilisant les outils spécifiques à ce langage, les
@@ -782,6 +777,8 @@ On remarquera aussi que les variables sont déclarées le plus proche possible d
 \end{correction}
 
 %-----------------------------------------------
+\renewenvironment{correction}{}{}
+\excludecomment{correction}
 
 \section{\mintinline{c++}{std::vector<double>}}
 
@@ -863,10 +860,10 @@ void main() {
 \end{correction}
 
 \vspace{1em}
-Dans un deuxième temps, simplifier le code en remplaçant la sommation manuelle par l'algorithme\\ \inline{std::accumulate(itérateur_début, itérateur_fin, zéro)} présent dans \inline{<numeric>}. On trouvera un exemple \href{https://en.cppreference.com/w/cpp/algorithm/accumulate}{ici}.
+[Bonus] Dans un deuxième temps, simplifier le code en remplaçant la sommation manuelle par l'algorithme\\ \inline{std::accumulate(itérateur_début, itérateur_fin, zéro)} présent dans \inline{<numeric>}. On trouvera un exemple \href{https://en.cppreference.com/w/cpp/algorithm/accumulate}{ici}.
 
 \begin{correction}
-La fonction \inline{std::accumulate} effectue la somme des éléments d'un conteneur. Comme tous les algoritmes de la bibliothèque standard, elle manipule en fait des \emph{itérateurs}, qui ne sont rien d'autre que des sortes de pointeurs adaptés à chaque type de conteneur. On fournit un itérateur de début \texttt{it\_beg} et de fin \texttt{it\_end} à l'algorithme : la somme sera effectée dans l'intervalle \texttt{[it\_beg,it\_end[}. Pour sommer le conteneur entier, il faut alors prendre \inline{it_beg = monVector.begin()} et \inline{it_end = monVector.end()}. On fournit aussi un élément d'initialisation pour commencer la somme; ici, c'est simplement \inline{0}.
+La fonction \inline{std::accumulate} effectue la somme des éléments d'un conteneur. Comme tous les algoritmes de la bibliothèque standard, elle manipule en fait des \emph{itérateurs}, qui ne sont rien d'autre que des sortes de pointeurs adaptés à chaque type de conteneur. On fournit un itérateur de début \texttt{it\_beg} et de fin \texttt{it\_end} à l'algorithme : la somme sera effectée dans l'intervalle \texttt{[it\_beg,it\_end[}. Pour sommer le conteneur entier, il faut alors prendre \inline{it_beg = monVector.begin()} et \inline{it_end = monVector.end()}. On fournit aussi un élément d'initialisation pour commencer la somme; ici, c'est simplement zéro, l'élément neutre de l'addition\footnote{Attention, \inline{std::accumulate<type_t>} est une fonction template qui fonctionne sur n'importe quel type \inline{type_t}. Il se trouve que le compilateur déduit \inline{type_t} à partir du troisième argument. Et si on écrit \inline{0}, il déduit \inline{int}, ce qui n'est pas ce que l'on veut (il somme alors des entiers et retourne un entier). Pour lui faire déduire \inline{double}, il faut soit écrire \inline{0.} (notez le point !), soit \inline{double(0)}, soit encore expliciter le type avec \inline{std::accumulate<double>(it1, it1, 0);}.}.
 
 \begin{minted}[breaklines]{c++}
 void main() {
@@ -880,8 +877,8 @@ void main() {
     exponentielle_par_reference(0, 2 * n * M_PI / N, re[n], im[n]);
   }
 
-  double re_result = std::accumulate(re.begin(), re.end(), 0);
-  double im_result = std::accumulate(im.begin(), im.end(), 0);
+  double re_result = std::accumulate(re.begin(), re.end(), 0.);
+  double im_result = std::accumulate(im.begin(), im.end(), 0.);
 
   affiche_complexe(re_result, im_result);
 }
