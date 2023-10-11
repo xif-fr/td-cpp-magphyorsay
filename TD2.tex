@@ -518,9 +518,6 @@ int main()
 
 \end{correction}
 
-% \renewenvironment{correction}{}{}
-% \excludecomment{correction}
-
 \subsection{Classe \texttt{Polygone}}
 
 \subsubsection{Initialisation}
@@ -588,7 +585,7 @@ using namespace std;
 
 void polygone::initialise_régulier(unsigned int n, double taille)
 {
-  // Création du tableau de points
+  // Faire en sorte que le tableau de points ait bien une taille n
   sommets = std::vector<point>(n);
 
   // Initialisation de chacun des sommets via la méthode initialise de la classe point
@@ -599,6 +596,7 @@ void polygone::initialise_régulier(unsigned int n, double taille)
       taille * sin(angle)
     );
   }
+  // Note : on peut aussi partir du tableau vide, puis faire .push_back() dans la boucle
 }
 
 void polygone::affiche_sommets() const
@@ -624,7 +622,8 @@ double polygone::calc_perimetre() const
 
   double perimetre = distance_points(sommets[0], sommets[ordre-1]);
 
-  // on considère que les sommets sont classés dans le tableau selon le périmètre (pas de croisement des côtés du polygone)
+  // on considère que les sommets sont classés dans le tableau selon le périmètre
+  // (pas de croisement des côtés du polygone)
   for (unsigned int i = 0; i < ordre-1; i++) {
     perimetre += distance_points(sommets[i], sommets[i+1]);
   }
@@ -640,7 +639,6 @@ double polygone::calc_perimetre() const
   unsigned int ordre = sommets.size();
   double perimetre = 0;
 
-  // on considère que les sommets sont classés dans le tableau selon le périmètre (pas de croisement des côtés du polygone)
   for (unsigned int i = 0; i < ordre; i++)
     perimetre += distance_points(sommets[i], sommets[(i+1)%ordre]);
 
@@ -679,7 +677,11 @@ int main()
     polygone poly;
     poly.initialise_régulier(n, 0.5);
     double p_n = poly.calc_perimetre();
+
+    // écriture dans le fichier
     fichier << n << " " << p_n << endl;
+
+    // affichage de temps en temps
     if (n < 1000 or n%1000 == 0)
       cout << n << " -> " << p_n << endl;
   }
@@ -688,6 +690,8 @@ int main()
   return 0;
 }
 \end{minted}
+
+Attention, si la méthode \inline{polygone::initialise_régulier} ne fait que des \inline{push_back} sans effacer le tableau au préalable, il faut bien re-créer un polygone à chaque fois en déclarant \inline{polygone poly} {\em dans} la boucle. En sortant de chaque itération, il sera détruit comme n'importe quelle autre variable déclarée au sein des accolades. Sinon, le nombre de points explose.
 
 \subsubsection*{Programme Python pour afficher les périmètres}
 
@@ -726,9 +730,12 @@ plt.show()
 \includegraphics[width=0.45\paperwidth]{TD2/perimetres-polygones-reguliers.pdf}
 \end{center}
 
-Pourquoi, à votre avis, la courbe finit-elle en escalier au lieu de suivre une belle loi d'échelle ?
+Pourquoi, à votre avis, la courbe finit-elle ici en escalier au lieu de suivre une belle loi d'échelle ?
 
 \end{correction}
+
+\renewenvironment{correction}{}{}
+\excludecomment{correction}
 
 \section{La classe \mintinline{c++}{complexe}}
  

@@ -362,7 +362,7 @@ Le fichier d'en-tête nommé \texttt{fibonacci.h} contient la déclaration (prot
 \begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
 #ifndef _FIBO_H_
 #define _FIBO_H_
-unsigned int fibonacci(unsigned int n) ; // ici le nom de l'argument est facultatif
+unsigned int fibonacci (unsigned int n); // ici le nom de l'argument est facultatif
 #endif
 \end{minted}
 
@@ -370,7 +370,7 @@ et le fichier source \texttt{fibonacci.cc}, contient la définition de la foncti
 
 \begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
 #include "fibonacci.h"  // inclusion du prototype de la fonction
-unsigned int rfibonacci(unsigned int n) {
+unsigned int fibonacci (unsigned int n) {
   if (n <= 2) return 1 ;
   else return rfibonacci(n-2) + rfibonacci(n-1);
 }
@@ -777,8 +777,6 @@ On remarquera aussi que les variables sont déclarées le plus proche possible d
 \end{correction}
 
 %-----------------------------------------------
-\renewenvironment{correction}{}{}
-\excludecomment{correction}
 
 \section{\mintinline{c++}{std::vector<double>}}
 
