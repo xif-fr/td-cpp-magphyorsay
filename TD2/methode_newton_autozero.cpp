@@ -5,6 +5,7 @@
 #include <fstream>
 #include <math.h>
 
+// note : on utilise ici le type std::complex de la bibliothèque standard, qui devrait fonctionner exactement comme votre classe complexe
 using complexe = std::complex<double>;
 using fonc_complexe_t = std::function<complexe(complexe)>;
 

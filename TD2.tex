@@ -703,9 +703,9 @@ data = np.loadtxt("perimetres.txt");
 n = data[:,0]
 p_n = data[:,1]
 
-plt.plot(n, p_n)
+plt.plot(n, p_n, label="points calculés")
 plt.xlabel("$n$")
-plt.ylabel("périmètre $p_n$", label="points calculés")
+plt.ylabel("périmètre $p_n$")
 plt.title("Périmètres de polygones réguliers")
 plt.axhline(y=np.pi, linestyle='--', color='black', label=r"$\pi$")
 plt.xscale('log')
@@ -734,9 +734,6 @@ Pourquoi, à votre avis, la courbe finit-elle ici en escalier au lieu de suivre 
 
 \end{correction}
 
-\renewenvironment{correction}{}{}
-\excludecomment{correction}
-
 \section{La classe \mintinline{c++}{complexe}}
  
 Dans le précédent TD, nous représentions un nombre complexe par sa partie réelle et sa partie imaginaire. Chaque fois que nous passions un nombre complexe en argument d'une fonction nous devions passer sa partie réelle et sa partie imaginaire... En utilisant le concept d'objet, créer une classe \inline{complexe} qui représente un nombre complexe. Transformer les fonctions \inline{affiche}, \inline{norme} et \inline{argument} écrites précédemment afin que ces dernières soient des membres de la classe \inline{complexe}. On n'oubliera pas le mot-clé \inline{public}, et on pourra se renseigner sur la fonction \href{http://en.cppreference.com/w/cpp/numeric/math/atan2}{\inline{atan2}} de \inline{<cmath>}. Bien évidemment, on testera le code écrit.
@@ -752,15 +749,15 @@ class complexe {
 public:
   double re, im;
 
-  void affiche();
+  void affiche () const;
 
-  double norme();
-  double argument();
+  double norme () const;
+  double argument () const;
 };
 
 #endif // COMPLEX_H
 \end{minted}
-Elle contient deux membres, la partie réelle et la partie imaginaire, et déclare les trois méthodes demandées par l'énoncé. On aura pris soin d'inclure le \emph{header guard}.
+Elle contient deux membres, la partie réelle et la partie imaginaire, et déclare les trois méthodes demandées par l'énoncé. On aura pris soin d'inclure le \emph{header guard}. Notons que l'on a déclaré nos trois méthodes comme constantes. En effet, elles ne modifient pas l'objet, et c'est donc une bonne pratique de les déclarer constantes (ce n'est ceci dit pas obligatoire).
 
 L'implémentation \emph{doit} être faite dans le fichier \filename{complexe.cpp} (en général, sauf pour les méthodes dites en ligne, \inline{inline}). On commence par inclure les fichiers d'en-tête donnant accès à la classe \inline{complexe}, à \inline{cout} et aux fonctions mathématiques
 \begin{minted}[breaklines]{c++}
@@ -772,15 +769,15 @@ using namespace std;
 \end{minted}
 Puis on définit les méthodes de la classe \inline{complexe} dans \filename{complexe.cpp}
 \begin{minted}[breaklines]{c++}
-void complexe::affiche() {
+void complexe::affiche () const {
   cout << re << " + " << im << " i" << endl;
 }
 
-double complexe::norme() {
+double complexe::norme () const {
   return sqrt(re*re + im*im);
 }
 
-double complexe::argument() {
+double complexe::argument () const {
   return atan2(im, re);
 }
 \end{minted}
@@ -1118,7 +1115,7 @@ Dans \filename{complexe.h}, assurons-nous d'abord que le type \inline{ostream} e
 \end{minted}
 Ensuite il faut déclarer l'opérateur de flux via
 \begin{minted}[breaklines]{c++}
-std::ostream& operator<< (std::ostream& out, const complexe& nombre);
+std::ostream& operator<< (std::ostream& out, const complexe& z);
 \end{minted}
 %Nous ne sommes pas obligés de déclarer cette fonction dans la classe \inline{complexe} précédée du mot-clé \inline{friend} car pour afficher un nombre complexe dans la console nous pouvons nous contenter d'utiliser les membres \inline{public} de la classe. (De manière générale, quand on affiche un objet dans la console, on n'a pas besoin d'afficher des informations qui ne sont pas visibles par l'utilisateur, ie. \inline{private}.)
 
@@ -1126,13 +1123,13 @@ On notera l'utilisation de \inline{std::} car utiliser \inline{using namespace} 
 
 Finalement, une possible implémentation de l'opérateur de flux peut-être
 \begin{minted}[breaklines]{c++}
-ostream& operator<< (ostream& out, const complexe& nombre) {
-  if (nombre.imag() >= 0) {
-    out << nombre.real() << " + " << nombre.imag() << "i";
+ostream& operator<< (ostream& out, const complexe& z) {
+  if (z.im >= 0) {
+    out << z.re << " + " << z.im << "i";
   } else {
-    out << nombre.real() << " - " << -nombre.imag() << "i";
- }
- return out;
+    out << z.re << " - " << -z.im << "i";
+  }
+  return out;
 }
 \end{minted}
 à écrire dans \filename{complexe.cpp} bien sûr. Ici, nous n'avons plus besoin d'utiliser \inline{std::} car nous sommes dans un fichier source \filename{*.cpp} dans lequel on aura pris soin d'insérer \inline{using namespace std;}. Ce n'est pas un problème ici, car un fichier \filename{*.cpp} ne peut pas être inclus dans un autre, donc l'instruction \inline{using namespace std;} a de l'effet uniquement à l'intérieur de ce fichier.\\
@@ -1341,7 +1338,9 @@ int main () {
 
 On utilise \inline{std::ofstream} pour écrire dans un fichier.
 
-Note : nous avons omis \inline{fichier_bassins_converg.close()}. C'est tout à fait acceptable, le fichier est automatiquement fermé lorsque la variable \inline{fichier_bassins_converg} est détruite. Nous allons voir comment cela fonctionne dans la suite du cours.
+Note : nous avons omis \inline{fichier_bassins_converg.close()}. C'est tout à fait acceptable, le fichier est automatiquement fermé lorsque la variable \inline{fichier_bassins_converg} est détruite. Nous allons voir comment cela fonctionne dans la suite du cours.\\
+
+Le fichier complet de correction est \filename{TD2/methode\_newton\_manualzero.cpp}, et le code python pour afficher les figures est disponible dans un notebook jupyter \filename{TD2/methode\_newton.ipynb}.
 
 \end{correction}
 
@@ -1377,7 +1376,9 @@ Voici les bassins de convergence de la méthode de Newton pour les trois zéros 
 \includegraphics[width=0.49\linewidth]{TD2/newton_bassins_converg.a01.pdf}
 \includegraphics[width=0.49\linewidth]{TD2/newton_bassins_converg.a001.pdf}
 \end{center}
-chaque zéro ayant sa couleur. On a bien une auto-similarité, quoi que différente à grande échelle (3 "bras" pour $|z|>1$) qu'à petite échelle (6 "bras" pour $|z|<1$). Une remarque un petit défaut de convergence pour $a=0.01$, simplement car \inline{max_it} était un peu faible (40). Sans rentrer dans les détails, tentez d'intuiter la raison de cette auto-similarité en pensant à la trajectoire de $z_n$. Voici une trajectoire :
+chaque zéro ayant sa couleur. On a bien une auto-similarité, quoi que différente à grande échelle (3 "bras" pour $|z|>1$) qu'à petite échelle (6 "bras" pour $|z|<1$). On remarque un petit défaut de convergence pour $a=0.01$, simplement car \inline{max_it} était un peu faible ici (40).\\
+
+Sans rentrer dans les détails, tentez d'intuiter la raison de cette auto-similarité en pensant à la trajectoire de $z_n$. Voici une telle trajectoire, permetant de remarquer que les lobes des régions fractales ne sont que des images (éventuellement multiples) du bassin de convergence principal :
 \begin{center}
 \includegraphics[width=0.7\linewidth]{TD2/newton_bassins_converg.a1_and_traj.pdf}
 \end{center}
