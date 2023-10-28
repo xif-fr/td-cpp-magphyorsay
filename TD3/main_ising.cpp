@@ -17,14 +17,14 @@ int main () {
 
 	#ifdef RESEAU_HEXAGONAL
 	float β = log(sqrt(2+sqrt(3))) / T_sur_Tc;  // réseau hexagonal
+	Réseau S (160, 180);
 	#else
 	float β = log(1+sqrt(2))/2 / T_sur_Tc;  // réseau carré
+	Réseau S (320, 180);
 	#endif
+	ising_init_alea(S);
 
 	std::ofstream fichier_r ("ising_magnétisation_énergie_txaccept.txt");
-
-	Réseau S (160, 180);
-	ising_init_alea(S);
 
 	sf::ContextSettings settings;
 	settings.antialiasingLevel = 2;
