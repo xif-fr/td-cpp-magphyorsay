@@ -25,11 +25,16 @@ Réseau::Site Réseau::site_index (int index) const {
 }
 
 Réseau::Site Réseau::site_xy (int x, int y) const {
-	// (x,y) quelconque -> (x,y) replié -> indice replié
+	// (x,y) quelconque -> (x,y) replié
 	x = x % nx;
 	if (x < 0) x += nx;
 	y = y % ny;
 	if (y < 0) y += ny;
+	return site_xy_brut(x, y);
+}
+
+Réseau::Site Réseau::site_xy_brut (int x, int y) const {
+	// (x,y) replié -> indice replié
 	int index = x + nx * y;
 	return Site(index, x, y);
 }
@@ -59,33 +64,44 @@ int8_t& Réseau::operator[] (int x, int y) {
 	return data[site_xy(x,y)._index];
 }
 
-void Réseau::for_each (std::function<void(Site)> func) const {
-	for (int i = 0; i < ntot; i++) 
-		func( site_index(i) );
+/* Itérateur sur les sites */
+
+Réseau::sites_iterator_t::sites_iterator_t (const Réseau& r)
+	: r(r), s(0,0,0)
+{}
+
+Réseau::sites_iterator_t Réseau::sites_iterator_t::operator++ () {
+	s._index++;
+	s._x++;
+	if (s._x == r.nx) {
+		s._x = 0;
+		s._y++;
+	}
+	return *this;
 }
 
-void Réseau::for_each (std::function<int8_t(Site)> func) {
-	for (int i = 0; i < ntot; i++) 
-		data[i] = func( site_index(i) );
+bool Réseau::sites_iterator_t::operator!= (Réseau::sites_iterator_end_t) const {
+	return s._index != r.ntot;
 }
 
 /* Voisinage d'un site */
 
 /*std::array<Réseau::Site,4> Réseau::voisins (Site s) const {
 	return {
-		site_xy_brut( (s._x+1)%nx,    s._y          ),
-		site_xy_brut(  s._x,         (s._y-1+ny)%ny ),
-		site_xy_brut( (s._x-1+ny)%nx, s._y          ),
-		site_xy_brut(  s._x,         (s._y+1)%ny    ),
-	};
-}*/
-
-std::array<Réseau::Site,4> Réseau::voisins (Site s) const {
-	return {
 		site_xy( s._x+1, s._y   ),
 		site_xy( s._x,   s._y-1 ),
 		site_xy( s._x-1, s._y   ),
 		site_xy( s._x,   s._y+1 ),
+	};
+}*/
+
+std::array<Réseau::Site,4> Réseau::voisins (Site s) const {
+	// version ~15% plus performante que celle ci-dessus
+	return {
+		site_xy_brut( (s._x+1)%nx,    s._y          ),
+		site_xy_brut(  s._x,         (s._y-1+ny)%ny ),
+		site_xy_brut( (s._x-1+nx)%nx, s._y          ),
+		site_xy_brut(  s._x,         (s._y+1)%ny    ),
 	};
 }
 

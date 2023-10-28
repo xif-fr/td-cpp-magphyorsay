@@ -36,11 +36,16 @@ Réseau::Site Réseau::site_index (int index) const {
 }
 
 Réseau::Site Réseau::site_xy (int x, int y, bool a) const {
-	// (x,y,a) quelconque -> (x,y,a) replié -> indice replié
+	// (x,y,a) quelconque -> (x,y,a) replié
 	x = x % nx;
 	if (x < 0) x += nx;
 	y = y % ny;
 	if (y < 0) y += ny;
+	return site_xy_brut(x, y, a);
+}
+
+Réseau::Site Réseau::site_xy_brut (int x, int y, bool a) const {
+	// (x,y,a) replié -> indice replié
 	int index = 2*( x + nx * y ) + a;
 	return Site(index, x, y, a);
 }
@@ -62,16 +67,6 @@ int8_t& Réseau::operator[] (Site s) {
 	return data[s._index];
 }
 
-void Réseau::for_each (std::function<void(Site)> func) const {
-	for (int i = 0; i < ntot; i++) 
-		func( site_index(i) );
-}
-
-void Réseau::for_each (std::function<int8_t(Site)> func) {
-	for (int i = 0; i < ntot; i++) 
-		data[i] = func( site_index(i) );
-}
-
 /* Voisinage d'un site */
 
 std::array<Réseau::Site,3> Réseau::voisins (Site s) const {
@@ -79,21 +74,37 @@ std::array<Réseau::Site,3> Réseau::voisins (Site s) const {
 	int y = s._y;
 
 	if (s._a) { // left triangle ▼
-		Site r = site_xy( (x+1)%nx, y, false );
-		Site l = site_xy( x, y, false );
+		Site r = site_xy_brut( (x+1)%nx, y, false );
+		Site l = site_xy_brut( x, y, false );
 		if (y == 0) { y = ny-1; x = (x-ny/2+nx)%nx; }
 		else y = y-1;
-		Site u = site_xy( (x+1)%nx, y, false );
+		Site u = site_xy_brut( (x+1)%nx, y, false );
 		return {r,u,l};
 	}
 	else { // right triangle ▲
-		Site l = site_xy( (x-1+nx)%nx, y, true );
-		Site r = site_xy( x, y, true );
+		Site l = site_xy_brut( (x-1+nx)%nx, y, true );
+		Site r = site_xy_brut( x, y, true );
 		if (y == ny-1) { y = 0; x = (x+ny/2)%nx; }
 		else y = y+1;
-		Site d = site_xy( (x-1+nx)%nx, y, true );
+		Site d = site_xy_brut( (x-1+nx)%nx, y, true );
 		return {r,d,l};
 	}
+}
+
+/* Itérateur sur les sites */
+
+Réseau::sites_iterator_t::sites_iterator_t (const Réseau& r)
+	: r(r), s(r.site_index(0))
+{}
+
+Réseau::sites_iterator_t Réseau::sites_iterator_t::operator++ () {
+	s = r.site_index(s._index + 1);
+	// pourrait être écrit de façon plus performant en incrémentant manuellement x, y, a
+	return *this;
+}
+
+bool Réseau::sites_iterator_t::operator!= (Réseau::sites_iterator_end_t) const {
+	return s._index != r.ntot;
 }
 
 /* Affichage du système */

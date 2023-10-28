@@ -32,7 +32,7 @@ bool ising_metropolis_step (Réseau& S, float β, float B) {
 
 /* Algorithme de Metropolis-Hastings avec une nouvelle valeur de spin choisie pour ne pas avoir de rejet ("heat bath algorithm") */
 
-bool ising_heat_bath_evolve (Réseau& S, float β, float B) {
+bool ising_heat_bath_step (Réseau& S, float β, float B) {
 	Site i = S.site_aleatoire();
 
 	// calcul du champ local
@@ -45,9 +45,9 @@ bool ising_heat_bath_evolve (Réseau& S, float β, float B) {
 
 	// set spin up or down
 	if (distrib_u01(rng) < p_up) 
-		S[si] = +1;
+		S[i] = +1;
 	else
-		S[si] = -1;
+		S[i] = -1;
 
 	return true;
 }
@@ -58,17 +58,16 @@ std::tuple<float,float> ising_magnétisation_énergie (const Réseau& S, float B
 	int M = 0;
 	float E = 0;
 
-	S.for_each([&] (Site i) {
-
-		// magnétisation
+	// boucle for range-based
+	// sous le capot, utilise l'itérateur sites_iterator_t et Réseau::begin(), Réseau::end()
+	for (Site i : S) {
+		// magnétisation :
 		M += S[i];
-
-		// énergie
-		for (Site j : S.voisins(i)) {
+		// énergie :
+		for (Site j : S.voisins(i)) 
 			E -= S[i] * S[j] / 2.f;
-			E -= S[i] * B;
-		}
-	});
+		E -= S[i] * B;
+	}
 
 	int ntot = S.nx * S.ny;
 	return { M /(float) ntot, E / ntot };
@@ -77,9 +76,9 @@ std::tuple<float,float> ising_magnétisation_énergie (const Réseau& S, float B
 /* Configuration aléatoire */
 
 void ising_init_alea (Réseau& S) {
-	S.for_each([] (Site i) {
-		return 2 * (rng()%2) - 1;;
-	});
+	for (Site i : S) {
+		S[i] = 2 * (rng()%2) - 1;
+	}
 }
 
 /*

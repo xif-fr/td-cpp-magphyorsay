@@ -139,7 +139,9 @@ Comme toujours, tester votre classe et ses méthodes.
 
 Maintenant que l'encapsulation est faite, on peut se permettre de modifier le fonctionnement interne de la classe \emph{sans changer quoi que ce soit pour l'utilisateur}, ie. sans modifier le programme de test. C'est un avantage majeur de l'encapsulation.\\
 
-Ajouter des attributs privés stockant la norme et l'argument comme présenté en introduction. Modifier les setters et les constructeurs pour garder sychronisé ces nouveaux attributs polaires avec les attributs carthésiens. Pour éviter de dupliquer le code, on pourra créer une méthode privée \inline{void sync_carth_to_polar()}. On rajoutera un setter \inline{void set_polar(double r, double theta)}, en s'aidant d'une méthode privée \inline{void sync_polar_to_carth()}.\\
+Ajouter des attributs privés stockant la norme et l'argument comme présenté en introduction. Modifier les setters et les constructeurs pour garder sychronisé ces nouveaux attributs polaires avec les attributs carthésiens, et vice-versa, lorsque des modifications sont effectuées. On rajoutera enfin un setter \inline{void set_polar(double r, double theta)}.\\
+
+Pour éviter de dupliquer le code, on pourra éventuellement créer des méthodes privées \inline{void sync_carth_to_polar()} et \inline{void sync_polar_to_carth()}.
 
 Pour ne pas passer trop de temps sur ce TD, on pourra supprimer les opérateurs surchargés (en particulier les opérateurs modifiant l'objet : \inline{+=}, \inline{*=}...).
 
@@ -317,7 +319,7 @@ class Site {
   int _y;
 };
 \end{minted}
-Ceci est pour un réseau carré, et les plus courageux feront le reste du TD avec un réseau hexagonal pour pimenter l'exercice\footnote{Le réseau hexagonal est plus compliqué à implémenter car bipartite (ce n'est pas un réseau de Bravais). Dans ce réseau, chaque site est relié à 3 voisins contrairement à 4 pour un réseau carré ou à 6 pour un réseau triangulaire. Une façon de faire est de stocker les deux réseaux de Bravais de façon interlacée, et de spécifier, en plus de \inline{x} et \inline{y}, sur quel sous-réseau de Bravais le site est situé, et donc introduire une 3è coordonnée (\inline{a} par exemple, qui vaudra \inline{true} ou \inline{false}).}. Comme \inline{_index}, \inline{_x} et \inline{_y} sont gérés et synchronisés par la classe \inline{Réseau} uniquement, et que l'utilisateur n'a pas à trifouiller ces données internes, nous allons les déclarer \inline{private}. En contrepartie, il faudra autoriser la classe \inline{Réseau} à y accéder. Une solution adaptée est d'utiliser une notion qui n'a pas été vue en cours : les classes et fonctions amies. Pour faire court, si la classe \inline{Site} déclare \inline{Réseau} comme classe amie, ses attributs privés seront accessibles dans les méthodes de \inline{Réseau}. Il faut utiliser le mot-clé \inline{friend} pour cela :
+Ceci est pour un réseau carré, et les plus courageux feront le reste du TD avec un réseau hexagonal (ou plus exactement \emph{en nid d'abeille}) pour pimenter l'exercice\footnote{Le réseau hexagonal est plus compliqué à implémenter car bipartite (ce n'est pas un réseau de Bravais). Dans ce réseau, chaque site est relié à 3 voisins contrairement à 4 pour un réseau carré ou à 6 pour un réseau triangulaire. Une façon de faire est de stocker les deux réseaux de Bravais de façon interlacée, et de spécifier, en plus de \inline{x} et \inline{y}, sur quel sous-réseau de Bravais le site est situé, et donc introduire une 3è coordonnée (\inline{a} par exemple, qui vaudra \inline{true} ou \inline{false}).}. Comme \inline{_index}, \inline{_x} et \inline{_y} sont gérés et synchronisés par la classe \inline{Réseau} uniquement, et que l'utilisateur n'a pas à trifouiller ces données internes, nous allons les déclarer \inline{private}. En contrepartie, il faudra autoriser la classe \inline{Réseau} à y accéder. Une solution adaptée est d'utiliser une notion qui n'a pas été vue en cours : les classes et fonctions amies. Pour faire court, si la classe \inline{Site} déclare \inline{Réseau} comme classe amie, ses attributs privés seront accessibles dans les méthodes de \inline{Réseau}. Il faut utiliser le mot-clé \inline{friend} pour cela :
 \begin{minted}[breaklines]{c++}
 class Site {
 private:
@@ -348,7 +350,7 @@ Enfin, écrire une méthode \inline{std::array<Site,4> voisins (Site s) const;} 
 
 Cette classe peut sembler intimidante à écrire, mais en s'y prennant bien, \filename{reseau.h} et \filename{reseau.cpp} peuvent avoir une taille de l'ordre de 60 lignes de code seulement chacun, commentaires inclus.
 \begin{correction}
-\subsubsection*{Déclaration : fichier \filename{reseau.h}}
+\subsubsection*{Déclaration : fichier \filename{reseau\_carre.h}}
 
 \begin{minted}[fontsize=\footnotesize]{c++}
 #include <array>
@@ -415,10 +417,10 @@ using Site = Réseau::Site;
 
 Notons que contrairement à ce que l'énnoncé demande, nous n'avons pas implémenté le constructeur par copie, et nous avons donc explicitement désactivé la copie en le déclarant \inline{delete}. Si nous voulons l'implémenter tout de même, il suffit de reprendre celui présenté en cours.
 
-\subsubsection*{Déclaration : fichier \filename{reseau.cpp}}
+\subsubsection*{Déclaration : fichier \filename{reseau\_carre.cpp}}
 
 \begin{minted}[fontsize=\footnotesize]{c++}
-#include "reseau.h"
+#include "reseau_carre.h"
 
 /* Construction et destruction */
 
@@ -482,6 +484,20 @@ std::array<Site,4> Réseau::voisins (Site s) const {
   };
 }
 \end{minted}
+
+\subsubsection*{Réseau hexagonal}
+
+La solution est fournie dans les fichiers \filename{TD3/reseau\_hexa.h} et \filename{TD3/reseau\_hexa.cpp}.
+
+\subsubsection*{Itérateurs}
+
+Notons que dans les classes \filename{reseau\_carré.h}:\inline{Réseau} et \filename{reseau\_hexa.h}:\inline{Réseau} des fichiers de correction, on s'est permis de rajouter un élément permettant de passer d'un réseau à l'autre sans aucune modification du reste du code : un itérateur sur les sites du réseau. Il est en effet nécessaire de parcourir l'ensemble du réseau parfois (par exemple pour l'initialisation ou le calcul des observables dans la suite du TD). Un parcours utilisant les coordonnées $(x,y)$ dépendrait nécessairement du type du réseau. Pour s'abstraire des coordonnées, on laisse la classe faire le parcours elle-même. L'utilisateur utilise alors l'itérateur et son \inline{operator++} pour avancer d'un site. Cela permet d'écrire des range-based loop, comme ceci :
+\begin{minted}[]{c++}
+for (Site i : S) {
+  faire_quelque_chose_avec S[i];
+}
+\end{minted}
+ce qui a aussi l'avantage d'être bien plus concis. Mais la notion d'itérateurs sort un peu du cadre de ce cours, et il n'est pas du tout nécessaire de la maîtriser.
 
 \end{correction}
 
@@ -558,7 +574,7 @@ On pourra utiliser le code suivant pour afficher un carré de $2 \times 2$, à u
   window.draw(sq);
 \end{minted}
 
-Pour un réseau hexagonal, on affichera chaque site sous forme d'un triangle, collé à ses trois voisins. Il n'est pas nécessaire de replier le réseau (qui a une forme de parallélogramme), mais si on le fait, on peut obtenir un résultat ressemblant à :
+Pour un réseau hexagonal, on affichera chaque site sous forme d'un triangle, collé à ses trois voisins. Alternativement, on peut dessiner le réseau en nid d'abeille lui même, et les spins comme des points blancs ou noirs sur les sites du réseau, mais c'est plus compliqué et ça ne remplit pas l'espace. Il n'est pas nécessaire de replier le réseau (qui a une forme de parallélogramme), mais si on le fait, on peut obtenir un résultat ressemblant à :
 \begin{center}
 \includegraphics[width=0.3\linewidth]{TD3/affichage_réseau_hexagonal.png}
 \end{center}
@@ -587,6 +603,8 @@ void Réseau::affiche_SFML (sf::RenderWindow& window, float pos_x, float pos_y) 
   }
 }
 \end{minted}
+
+Pour un réseau hexagonal, la solution est fournie dans le fichier \filename{TD3/reseau\_hexa.cpp}.
 \end{correction}
 
 La boucle d'affichage du système servira dans la suite aussi comme boucle d'itération dans la simulation du modèle d'Ising.
@@ -598,7 +616,7 @@ Pour tester l'implémentation des conditions périodiques aux limites, initialis
 \begin{correction}
 \begin{minted}[fontsize=\footnotesize]{c++}
 #include <iostream>
-#include "reseau.h"
+#include "reseau_carre.h"
 
 int main () {
 
@@ -728,7 +746,7 @@ Notez que l'algorithme de Metropolis n'est pas limité à l'échantillonage d'un
 
 On fixera l'échelle d'énergie et de température en fixant $J=k_\mathrm{B}=1$. Écrire une fonction
 \begin{minted}[samepage]{c++}
-bool ising_metropolis_evolve (Réseau& S, float beta, float B);
+bool ising_metropolis_step (Réseau& S, float beta, float B);
 \end{minted}
 effectuant un pas de l'algorithme de Metropolis. Si l'inversion de spin est acceptée, la fonction modifie \inline{S} et renvoie \inline{true}. Sinon, elle ne fait rien et renvoie \inline{false}. Encore une fois, la description de l'algorithme peut être intimidante, mais cette fonction tient en moins de 20 lignes de code. Est-ce nécessaire de passer \inline{S} par référence ?\\
 
@@ -742,7 +760,7 @@ et obtenir une valeur ainsi : \inline{float t = distrib_u01(rng);}\\
 
 \begin{correction}
 \begin{minted}[samepage]{c++}
-bool ising_metropolis_evolve (Réseau& S, float beta, float B) {
+bool ising_metropolis_step (Réseau& S, float beta, float B) {
   // choix d'un site aléatoire
   Site i = S.site_aleatoire();
 
@@ -778,12 +796,12 @@ pour un réseau carré en deux dimensions (résultat analytique difficile à obt
 
  pour un réseau hexagonal (résltat analytique relativement simple à calculer par dualité\footnote{Il s'agit d'un argument magnifique de dualité avec le réseau triangulaire. On pourra par exemple consulter \url{http://chimera.roma1.infn.it/ENZO/FC/ESTRATTI/DUALITY/mussardo_duality.pdf}, partie 4.3. Le résultat est en dernière page, où $L=J$.}).\\
 
- Une taille raisonnable de système est $200 \times 100$. Pour ceux affichant le système dans le terminal, n'hésitez pas à dézoomer fortement ou réduire la taille de la police de caractères pour voir le système dans son entièreté. Pour ceux ayant mis en place l'affichage graphique, un système de $300 \times 300$ est envisageable. Enfin, pour garantir une bonne performance malgré les couches d'abstraction, on compilera avec les options \inline{-Ofast -flto}.\\
+ Une taille raisonnable de système est $200 \times 100$. Pour ceux affichant le système dans le terminal, n'hésitez pas à dézoomer fortement ou réduire la taille de la police de caractères pour voir le système dans son entièreté. Pour ceux ayant mis en place l'affichage graphique, un système de $300 \times 300$ est envisageable. Enfin, pour garantir une bonne performance malgré les couches d'abstraction, on compilera avec l'option \inline{-Ofast}, et on effectuera l'éditions de lien avec l'option \inline{-flto}.\\
 
 \begin{correction}
-Voilà un exemple du programme principal. La fonction \inline{ising_metropolis_evolve} est déclarée directement dans le \filename{main.cpp}, mais il est préférable d'avoir une paire de fichiers \filename{ising.h}/\filename{ising.cpp} séparée. On a implémenté à la fois l'affichage dans la console et avec la SFML dans une fenêtre.
+Voilà un exemple du programme principal. La fonction \inline{ising_metropolis_step} est déclarée directement dans le \filename{main.cpp}, mais il est préférable d'avoir une paire de fichiers \filename{ising.h}/\filename{ising.cpp} séparée. On a implémenté à la fois l'affichage dans la console et avec la SFML dans une fenêtre.
 \begin{minted}[fontsize=\footnotesize]{c++}
-#include "reseau.h"
+#include "reseau_carre.h"
 #include <random>
 #include <iostream>
 #include <SFML/Graphics.hpp>
@@ -791,7 +809,7 @@ Voilà un exemple du programme principal. La fonction \inline{ising_metropolis_e
 std::mt19937 rng (42);
 std::uniform_real_distribution<float> distrib_u01 (0,1);
 
-bool ising_metropolis_evolve (Réseau& S, float beta, float B) {
+bool ising_metropolis_step (Réseau& S, float beta, float B) {
   ...
 }
 
@@ -822,7 +840,7 @@ int main () {
 
     // 10^6 pas de l'algorithme de Metropolis pour le modèle d'Ising
     for (int n = 0; n < 1000000; n++) {
-      ising_metropolis_evolve(S, beta, B);
+      ising_metropolis_step(S, beta, B);
     }
     
     // Affichage dans la console
@@ -853,11 +871,16 @@ Notons enfin que, en observant l'évolution de notre système au cours de la sim
 \end{figure}
 
 \begin{correction}
-À $T \simeq T_\text{c}$, les bords de domaine ont l'air très "déchiquetés" et ne sont pas nets. Le système a en fait un aspect fractal : on a des domaines de toutes tailles, des plus petits aux plus gros et s'interpénétrant. On verra dans la suite qu'on a en effet une invariance d'échelle au point critique.
+À $T \simeq T_\text{c}$, les bords de domaine ont l'air très "déchiquetés" et ne sont pas nets. Le système a en fait un aspect fractal : on a des domaines de toutes tailles, des plus petits aux plus gros et s'interpénétrant. On verra dans la suite qu'on a en effet une invariance d'échelle au point critique.\\
+
+On remarque que le système fluctue beaucoup. De plus, il devient très sensible au champ magnétique : à $T = 0.98 \, T_\text{c}$, il suffit de $B=\pm 0.001$ pour forcer le système à s'aligner sur le champ. Au contraire, plus on s'éloigne de $T_\text{c}$, moins le champ influence le système.\\
+
+Voilà deux configurations typiques aux point critique pour un réseau carré à gauche et hexagonal à droite :
 \begin{center}
-\includegraphics[width=0.49\linewidth]{TD3/T_sur_Tc_1.0.png}
+\includegraphics[height=0.46\linewidth]{TD3/T_sur_Tc_1.0.png}
+\includegraphics[height=0.46\linewidth]{TD3/T_sur_Tc_1.0_hexa.png}
 \end{center}
-On remarque que le système fluctue beaucoup. De plus, il devient très sensible au champ magnétique : à $T = 0.98 \, T_\text{c}$, il suffit de $B=\pm 0.001$ pour forcer le système à s'aligner sur le champ. Au contraire, plus on s'éloigne de $T_\text{c}$, moins le champ influence le système.
+On ne remarque pas de différences structurelles entre les deux réseau, et c'est bien normal : proche du point critique, les détails microscopiques du système ne comptent plus, et les comportements relatifs au point critique sont identiques. Seule $T_\text{c}$ change. On dit que deux réseaux systèmes appartiennent à la même \emph{classe d'universalité}.
 \end{correction}
 
 \subsection{Calcul de quelques observables}
@@ -880,10 +903,9 @@ std::tuple<float,float> ising_magnétisation_énergie (const Réseau& S, float B
       M += S[i];
 
       // énergie
-      for (Site j : S.voisins(i)) {
+      for (Site j : S.voisins(i)) 
         E -= S[i] * S[j] / 2.f;
-        E -= S[i] * B;
-      }
+      E -= S[i] * B;
 
     }
   }
@@ -1049,7 +1071,7 @@ Dans nos simulations, on remarque aussi que le système n'arrive pas à complèt
 \includegraphics[width=0.75\linewidth]{TD3/ising_stats_scanT_250x250_5e9steps_2runs.magnetisation.pdf}
 \end{center}
 
-Quand aux fluctuations de magnétisation, elles sont maximales au point critique, ce qui est facile à comprendre : le système est sur le point de se magnétiser spontanément, mais dans la compétition énergie/entropie personne n'arrive à gagner. La moindre fluctuation change fortement la magnétisation. On remarque que le maximum de fluctuations d'énergie se trouve légèrement en dessous de la température critique, ce qui est attendu pour un système de taille fini.
+Quand aux fluctuations de magnétisation, elles sont maximales au point critique, ce qui est facile à comprendre : le système est sur le point de se magnétiser spontanément, mais dans la compétition énergie/entropie personne n'arrive à gagner. La moindre fluctuation change fortement la magnétisation à l'échelle du système entier. On remarque que le maximum de fluctuations d'énergie se trouve légèrement en dessous de la température critique, ce qui est attendu pour un système de taille fini.
 \end{correction}
 
 Si il vous reste du temps, il est instructif de se placer juste en dessous de la température critique et de faire tourner le programme (très) longtemps, puis d'afficher un histogramme des valeurs instantannées de la magnétisation. Quelle forme a-t-il ? En quoi est-ce une bien meilleure idée de regarder l'histogramme plutôt que la valeur moyenne $\langle M \rangle$ pour trouver la valeur exacte de la température critique (pensez à la symétrie d'inversion $S \to -S$ et à la conséquence immédiate que ça doit avoir sur la valeur de $\langle M \rangle$) ?
@@ -1078,35 +1100,43 @@ Voilà le résulat, obtenu avec un réseau carré de $200 \times 200$ (le résul
 Les barres d'erreurs représentent ici la variance de la série de magnétisation de chaque incrément de $B$ ($10^8$ pas par incrément). Le code Python est disponible dans \filename{TD3/ising\_stats\_scanB.ipynb}.
 \begin{enumerate}
 \item Pour $T>T_\text{c}$, on observe une courbe lisse (en forme de "fonction d'activation") et indépendante du sens de variation de $B$. Il n'y a ici pas de magnétisation spontannée, il s'agit seulement de la polarisation des spins (certes aidée par les interactions) dans le champ magnétique, avec saturation à fort champ.
-\item Pour $T=T_\text{c}$, on observe encore une courbe (presque) lisse, mais beaucoup plus raide autour de $B$. C'est parce que le système est beaucoup plus polarisable au point critique car le système est au bord de la magnétisation spontannée. Théoriquement, la pente est même infinie et la susceptibilité magnétique $\chi_\text{m}=\partial M \ \partial B$ est infinie à $T=T_\text{c}$, $B=0$. Le petit hysteresis observable provient du fait que $T/T_\text{c}=1$ est en fait un tout petit peu en dessous de la température critique pour un système de taille finie. Notre mesure est d'ailleurs d'un autre moyen pour trouver la position précise du point critique.
+\item Pour $T=T_\text{c}$, on observe encore une courbe (presque) lisse, mais beaucoup plus raide autour de $B$. C'est parce que le système est beaucoup plus polarisable au point critique car le système est au bord de la magnétisation spontannée. Théoriquement, la pente est même infinie et la susceptibilité magnétique $\chi_\text{m}=\partial M \ \partial B$ est infinie à $T=T_\text{c}$, $B=0$. Le petit hysteresis observable provient du fait que, pour un système de taille finie, la température critique théorique est en fait un tout petit peu en dessous de la température critique réelle. Notre mesure est d'ailleurs d'un autre moyen pour trouver la position précise du point critique.
 \item Pour $T<T_\text{c}$, il y a magnétisation spontannée, et il faut appliquer un champ fini (ici $B_\text{c}(T) \approx \pm 0.05$) pour contrer l'alignement collectif et forcer le système à changer de signe de magnétisation. On observe en conséquence un clair hystérésis : les courbes pour $B$ augmentant ou diminuant sont différentes car l'état du système dépend fortement de son état antérieur. Hormis proche de $B_\text{c}$, la magnétisation vaut presque $\pm 1$ (forte magnétisation spontannée car on est loin en dessous de la température critique).
 \end{enumerate}
 \end{correction}
 
-\begin{comment}
 \subsection{[Bonus] Observation de l'invariance d'échelle par décimation}
 
+À venir...
 
-\subsection{[Bonus] Que coûtent l'abstraction et la compilation séparée ?}
+\section{[Bonus] Que coûtent l'abstraction et la compilation séparée ?}
 
-\inline{-Ofast -flto}
+Nous avons mentionné l'utilisation des options \inline{-Ofast -flto} pour obtenir de bonnes performances. Expliquons pourquoi.\\
 
-\begin{minted}{text}
-clang :
--O1 -> 7.7s
--Ofast -> 7.0s
--O3 -flto -> 6.7s
--Ofast -flto -> 4.4s
+La première option, que l'on utilise à la compilation (l'étape \texttt{.cpp} $\to$ \texttt{.o}) et qui fait partie de la série d'options \inline{-O0}, \inline{-O1}, \inline{-O2}, \inline{-O3}, \inline{-Ofast}, indique au compilateur d'effectuer toutes les optimisations qu'il peut pour accélérer l'exécution du programme (élimination des valeurs temporaires et des copies, ré-ordonnancement du code, déroulage des boucles, et bien d'autres optimisations encore). L'option \inline{-O0} désactive toute optimisation (parfois pratique pour le déboguage), et \inline{-O3}/\inline{-Ofast} activent toutes les optimsations. La différence entre \inline{-O3} et \inline{-Ofast} est que le deuxième privilégie la vitesse à tout prix, au détriment de la taille de l'exécutable, ce qui n'est pas toujours une bonne idée.\\
 
-gcc :
--O1 -> 6.7s
--Ofast -> 5.7s
--Ofast -flto -> 4.9s
+Testez votre programme, avec une durée de simulation finie de l'ordre de $10\,\mathrm{s}$, en compilant avec \inline{-O1}, \inline{-O3} et \inline{-Ofast}, et sans \inline{-flto}. Utilisez la commande unix \texttt{time [programme]} pour mesurer le temps d'exécution. Ajoutez ensuite \inline{-flto} à l'édition de liens (l'étape \{\texttt{.o}\} $\to$ exécutable). Voyez-vous une grosse différence ?\\
 
-ising codé en C (-Ofast -flto) :
-clang ->
-gcc ->
-\end{minted}
-\end{comment}
+L'option \inline{-flto} est là pour régler un problème majeur qui vient avec l'utilisation de plusieurs fichiers \texttt{.cpp}, et donc \texttt{.o} différents. En effet, lors de la compilation de \texttt{ising.cpp} en \texttt{ising.o}, le compilateur n'a aucune idée de ce qui se passe dans \texttt{reseau.cpp}. Il sait juste que les fonctions de \texttt{reseau.h} ont été déclarées. Il n'est donc pas possible d'effectuer des optimisations concernant l'appel de fonctions entre \texttt{ising.cpp} et \texttt{reseau.cpp}, par exemple l'élimination de copie ou même l'élimination des appels de fonction en copiant la fonction à l'endroit où elle est utilisée (\emph{inlining}). On perd donc une grosse opportunité d'optimisation, surtout pour ce TD où les fonctions de \inline{Réseau} méritent d'être inlinées. L'option \inline{-flto}, pour \emph{link time optimization}, rajoute un deuxième round d'optimisations au moment où l'édition de liens entre les \texttt{.o} est effectuée. À ce moment là, et à ce moment là seulement, le compilateur a une vue globale de tout le code, et peut donc effectuer toutes les optimisations.\\
+
+Pour vérifier que l'on ne perd pas de performance par rapport à un code avec beaucoup moins d'abstraction, écrit "à la C" (impératif) et dans un seul fichier, comparez avec le programme \filename{TD3/ising\_monolithique.cpp}, où vous adapterez la taille du système et le nombre d'itérations pour que cela corresponde à votre programme. Voyez-vous une différence de performance ?
+
+\begin{correction}
+Le tableau suivant montre le temps d'exécution pour $2\cdot 10^8$ pas de l'algorithme, pour un réseau carré de $200 \times 200$, sur un ordinateur portable des années 2010 de performances moyennes, et sur Linux.
+\begin{table}[H]
+\hspace*{-0.45cm}%
+\begin{tabular}{cccc|cc}
+\hline
+\multicolumn{4}{c|}{\textit{\textbf{Code orienté objet avec fichiers séparés}}}                                                                                 & \multicolumn{2}{c}{\textit{\textbf{Code impératif monolithique}}}      \\
+\multicolumn{1}{c|}{gcc \texttt{-O1}} & \multicolumn{1}{c|}{gcc \texttt{-Ofast}} & \multicolumn{1}{c|}{gcc \texttt{-Ofast -flto}} & clang \texttt{-Ofast -flto} & \multicolumn{1}{c|}{gcc \texttt{-Ofast}} & clang \texttt{-Ofast -flto} \\ \hline
+\multicolumn{1}{c|}{32.5 s}           & \multicolumn{1}{c|}{18.2 s}              & \multicolumn{1}{c|}{\textbf{8.2 s}}            & 8.9 s                       & \multicolumn{1}{c|}{\textbf{7.7 s}}      & 8.0 s                       \\ \hline
+\end{tabular}
+\end{table}
+On remarque les performances catastrophiques du programme lorsqu'il manque l'optimisation au niveau de la compilation \texttt{-Ofast/-O3} et/ou l'optimisation au niveau de l'édition de liens \texttt{-flto}.\\
+
+On remarque aussi que avec \texttt{-Ofast -flto}, le temps d'exécution est très similaire à celui du programme monolithique impératif. On peut donc conclure que l'ajout de couches d'abstractions et la séparation en multiples fichiers, lorsque le code est conçu correctement, n'apporte pas de dégradation de performances significatives. Il en serait tout autre avec un langage interprété comme le Python.\\
+
+Enfin, la différence entre les compilateurs gcc et clang est faible lorsque toutes les optimisations sont activés.
+\end{correction}
 
 \end{document}

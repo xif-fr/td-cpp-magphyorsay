@@ -11,11 +11,15 @@ int main () {
 	float T_sur_Tc;
 	std::cout << "T/Tc ?" << std::endl;
 	std::cin >> T_sur_Tc;
-	//float β = log(1+sqrt(2))/2 / T_sur_Tc;  // réseau carré
-	float β = log(sqrt(2+sqrt(3))) / T_sur_Tc;  // réseau hexagonal
 	std::cout << "B ?" << std::endl;
 	float B;
 	std::cin >> B;
+
+	#ifdef RESEAU_HEXAGONAL
+	float β = log(sqrt(2+sqrt(3))) / T_sur_Tc;  // réseau hexagonal
+	#else
+	float β = log(1+sqrt(2))/2 / T_sur_Tc;  // réseau carré
+	#endif
 
 	std::ofstream fichier_r ("ising_magnétisation_énergie_txaccept.txt");
 
