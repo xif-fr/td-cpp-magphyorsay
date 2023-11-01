@@ -1140,7 +1140,7 @@ ostream& operator<< (ostream& out, const complexe& z) {
 \newpage
 \section{Méthode de Newton et fractales}
 
-Concluons ce TD par une étude des propriétés de convergence de la méthode de Newton.\\
+Concluons ce TD par une étude des propriétés de convergence de la méthode de Newton, en utilisant la classe \inline{complexe} que l'on a précedemment écrite\footnote{Vous pouvez aussi utiliser la classe \inline{std::complex<double>} de la bibliothèque standard au cas où vous n'auriez pas une classe \inline{complexe} entièrement fonctionnelle. Son utilisation est presque identique, consultez une documentation en ligne pour plus de détails.}.\\
 
 \subsection{Introduction}
 
@@ -1154,7 +1154,7 @@ dont il est facile de connaitre le zéro $z^{(0)}$ (équation affine) :
 \begin{equation*}
 0 = f(z_n) + (z^{(0)} - z_n)\,f'(z_n) \quad \Leftrightarrow \quad z^{(0)} = z_n - \frac{f(z_n)}{f'(z_n)}
 \end{equation*}
-Dit autrement, $z^{(0)}$ est l'intersection de la tangeante de $f$ en $z_n$ avec l'axe des abscisses, comme le montre . Ce n'est évidemment pas un zéro de $f$, mais on a bon espoir que $z^{(0)}$ soit plus proche d'un zéro que $z_n$. On itère alors cette prodécure en prenant ce $z^{(0)}$ comme un nouveau point de travail :
+Dit autrement, $z^{(0)}$ est l'intersection de la tangeante de $f$ en $z_n$ avec l'axe des abscisses, comme le montre le figure ci-dessous. Ce n'est évidemment pas un zéro de $f$, mais on a bon espoir que $z^{(0)}$ soit plus proche d'un zéro que $z_n$. On itère alors cette prodécure en prenant ce $z^{(0)}$ comme un nouveau point de travail :
 \begin{equation*}
 z_{n+1} = z_n - \frac{f(z_n)}{f'(z_n)}
 \end{equation*}
@@ -1221,14 +1221,14 @@ N'hésitez pas à temporairement ajouter un affichage des valeurs durant l'itér
 \begin{correction}
 Implémentation possible :
 
-\begin{minted}[breaklines,samepage]{c++}
+\begin{minted}[breaklines,samepage,mathescape]{c++}
 #include <iostream>
 
 std::tuple<complexe,int> methode_newton (fonc_complexe_t f, fonc_complexe_t f_deriv, complexe z, unsigned int max_it, double epsilon, bool debug = false) {
   int n = 0;
   complexe fz = f(z);
   epsilon *= epsilon;
-  // on regarde plutôt |f(z)|^2 < espilon^2
+  // on regarde plutôt $|f(z)|^2 < \epsilon^2$
   while (fz.abssquare() > epsilon) {
     if (n >= max_it)
       return { z, -1 };
@@ -1244,9 +1244,9 @@ std::tuple<complexe,int> methode_newton (fonc_complexe_t f, fonc_complexe_t f_de
 
 On observe une petite optimisation : on effectue la comparaison $|f(z)|^2 < \epsilon^2$ car la racine carrée nécessaire au calcul de $|f(z)|$ est coûteuse.\\
 
-Notez qu'il n'y a aucun besoin de déclarer une variable locale complexe pour $z_n$, l'argument \inline{z} (passé par copie) fait très bien l'affaire. Par contre, comme $f(z)$ rentre à la fois dans le test de convergence et la relation de récurrence, autant définir une variable \inline{fz} pour éviter de le calculer deux fois par itération.\\
+Notez qu'il n'y a aucun besoin de déclarer une variable locale complexe pour $z_n$, l'argument \inline{z} (passé par copie) fait très bien l'affaire. Par contre, comme $f(z)$ rentre à la fois dans le test de convergence et la relation de récurrence, autant donc définir une variable \inline{fz} pour éviter de calculer $f(z)$ deux fois par itération.\\
 
-Enfin, on s'est permis d'ajouter un flag \inline{debug} pour activer l'affichage des itérations au besoin. Notre main ressemble à
+Enfin, on s'est permis d'ajouter un flag \inline{debug} pour activer l'affichage des itérations au besoin. Notre \inline{main()} ressemble à :
 
 \begin{minted}[breaklines,samepage]{c++}
 #include <iomanip>
@@ -1291,7 +1291,7 @@ fonc_complexe_t f_deriv = [] (complexe z) { return 3.*z*z; };
 Notons que le calcul \inline{z*z} est effectué deux fois par itération, ce qui n'est pas optimal. Ceci dit, il est possible que le compilateur le remarque et évite ce double calcul.
 \end{correction}
 
-Mettez-vous proche de $z_0=0$ et variez légèrement cette valeur de départ dans différentes direction. Sur quel zéro tombez vous ? Êtes-vous d'accord avec votre voisin ? Que fait le temps de convergence à mesure que l'on s'approche de zéro $z_0=0$ ? Pourquoi ?\footnote{Regardez $f'$...}\\
+Mettez-vous proche de $z_0=0$ et variez légèrement cette valeur de départ dans différentes direction. Sur quel zéro tombez vous ? Êtes-vous d'accord avec votre voisin ? Que fait le temps de convergence à mesure que l'on rapproche $z_0$ de $0$ ? Pourquoi ?\footnote{Regardez $f'$...}\\
 
 Pour y voir un plus clair, nous allons parcourir $z_0$ de façon systématique sur une grille de taille $N\times N$ maillant $\{x+\mathrm{i}y,\ x\in[-a,+a],\ y\in[-a,+a]\}$, et afficher le résultat avec matplotlib. Nous allons numéroter chaque zéro ainsi que lui définir une couleur, afin d'afficher une carte des bassins de convergence (ie. l'ensemble des points qui convergent vers un zéro donné).\\
 
