@@ -108,7 +108,7 @@
 
 \chapter{Héritage}
 
-Ce TD permet d'appliquer la notion d'héritage avec deux courts exercices. Pour ceux qui sont en avance, le TD 5 permet d'aller plus en profondeur, et d'explorer la notion de polymorphisme à travers la simulation d'un billard.
+Ce TD permet d'appliquer la notion d'héritage avec deux courts exercices. Pour ceux qui sont en avance, le TD 5 permet d'aller plus en profondeur, et d'explorer la notion de polymorphisme à travers la simulation d'un billard, ainsi que de mettre en \oe uvre un affichage graphique avec la bibliothèque SFML.
 
 \section{Échauffement : ajout de fonctionnalité par héritage}
 
@@ -128,7 +128,7 @@ qui modifie son argument pour le normaliser (\inline{normalize(z);}). Mais nous 
 
 Créez une classe \inline{complexe}, héritant de \inline{std::complexe<double>}, et ajoutant une méthode\\
 \inline{  void complexe::normalize();}\\
-modifiant les parties réelles et imaginaires (à travers les setters) pour normaliser le nombre.\\
+qui modifie les parties réelles et imaginaires (à travers les setters) pour normaliser le nombre.\\
 
 Il vous faudra, comme toujours pour l'héritage, définir le constructeur (\inline{complexe::complexe(double=0.,double=0.)}), le constructeur par copie (\inline{complexe::complexe(const complexe&)}, où l'on pourra simplement relayer à celui de \inline{std::complex<double>}), ainsi que l'opérateur d'affectation \inline{complexe& complexe::operator=(const complexe&)}, que l'on pourra définir \inline{= default;}). Il n'y a pas besoin de définir de destructeur, celui de la classe mère étant trivial. Comme d'habitude, testez votre code. Pour faire court, on pourra définir tout dans \filename{main.cpp}, et le code ne devrait pas dépasser une cinquantaine de lignes.\\
 
@@ -147,7 +147,7 @@ C'est bien d'avoir un code qui fonctionne, mais c'est tout aussi important de co
    23 |         complexe z2 = z - complexe(1, 0);
       |                       ~~^~~~~~~~~~~~~~~~
 \end{minted}
-  Comment faire que ça fonctionne quand même ? Une seule ligne de code est nécessaire.
+  Comment faire que cela fonctionne quand même ? Une seule ligne de code est nécessaire.
 
 \end{enumerate}
 
@@ -201,7 +201,7 @@ Une fois cette basé écrite, nous avons simplement ajouté une méthode \inline
 Répondons aux questions :
 \begin{enumerate}
 
-  \item \href{https://en.cppreference.com/w/cpp/numeric/complex/operator_ltltgtgt}{Il existe} un \inline{operator<< (std::ostream&, const std::complexe<double>&)} pour afficher un \inline{std::complexe<double>}. Pourquoi cela fonctionne-t-il encore pour notre classe \inline{complexe} ? Simplement car \inline{complexe} {\textbf est un} \inline{std::complexe<double>} par héritage. Comme l'opérateur prend l'objet à afficher \emph{par référence}, le polymorphisme joue. Notre \inline{complexe} passe donc sans problème dans cette fonction, qui, en interne, utilise les getters \inline{real()} et \inline{imag()}, qui ont bien sûr été hérités dans notre classe. Tout fonctionne donc de façon transparente grâce au polymorphisme.
+  \item \href{https://en.cppreference.com/w/cpp/numeric/complex/operator_ltltgtgt}{Il existe} un \inline{operator<< (std::ostream&, const std::complexe<double>&)} pour afficher un \inline{std::complexe<double>}. Pourquoi cela fonctionne-t-il encore pour notre classe \inline{complexe} ? Simplement car \inline{complexe} \emph{est un} \inline{std::complexe<double>} par héritage. Comme l'opérateur prend l'objet à afficher \emph{par référence}, le polymorphisme joue. Notre \inline{complexe} passe donc sans problème dans cette fonction, qui, en interne, utilise les getters \inline{real()} et \inline{imag()}, qui ont bien sûr été hérités dans notre classe. Tout fonctionne donc de façon transparente grâce au polymorphisme.
 
   \item \inline{z *= 2;} fonctionne sans problème car la méthode \inline{std::complexe<double>::operator*} a été héritée dans notre classe.
 
@@ -219,6 +219,29 @@ Répondons aux questions :
 
 \end{enumerate}
 
+\end{correction}
+
+\section{Réorganisation du code du TD 3}
+
+Dans le TD précédent, nous avons défini une classe \inline{Réseau} pour représenter notre ensemble de sites. Mais tout le code relatif à la simulation du modèle d'Ising (initialisation, hamiltonien, algorithme de Métropolis, calcul d'observables...) a été défini en tant que fonctions normales.\\
+
+Une autre organisation possible est la suivante : le code relatif au modèle d'Ising fait partie d'une classe \inline{ModèleIsing} héritant de la classe \inline{Réseau}, et il y a des méthodes plutôt que des fonctions. Cela a l'avantage, entre autres, de rendre le code plus modulaire et plus structuré.\\
+
+Une autre façon de faire est la composition, où une classe \inline{ModèleIsing} aurait un attribut de type \inline{Réseau}, au lieu d'en hériter.\\
+
+Les deux façons sont admissibles, mais pour l'exercice, nous allons ré-organiser le code en utilisant l'héritage. La figure \ref{fig:diag-classes-ising} montre un diagramme des classes simplifié de la structure désirée. On pourrait encapsuler encore plus de logique dans la classe \inline{ModèleIsing}, par exemple la boucle de simulation, le calcul du taux d'acceptation, le calcul automatique des observables et leur enregistement dans un fichier...\\
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.55\linewidth]{TD4/diag-classes-ising.pdf}
+\caption{Diagramme des classes simplifié.}
+\label{fig:diag-classes-ising}
+\end{figure}
+
+Le constructeur prenant (\inline{nx},\inline{ny}) comme arguments initialisera le réseau avec des valeurs aléatoires, alors que celui prenant un troisième argument \inline{uint8_t} initialisera un système uniforme, en prenant soin de vérifier que la valeur donnée est bien $\pm 1$. Faites cet exercice de ré-organisation, et testez si votre code fonctionne comme précédemment.
+
+\begin{correction}
+Les fichiers de correction (classe \inline{ModèleIsing} et \inline{main()}) sont présents dans le dossier du TD. La classe \inline{Réseau} est inchangée, et le code fonctionne que ce soit pour le réseau carré ou le réseau hexagonal.
 \end{correction}
 
 \end{document}
