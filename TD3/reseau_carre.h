@@ -31,7 +31,8 @@ public:
 private:
 
 	// Zone mémoire stockant la matrice repliée
-	int8_t* data;
+	using val_t = int8_t;
+	val_t* data;
 	// Nombre total de sites (0 <= _index < ntot)
 	const int ntot;
 
@@ -49,24 +50,28 @@ public:
 	Site site_aleatoire () const;
 
 	// Accès à la valeur d'un site
-	int8_t operator[] (Site) const;
-	int8_t& operator[] (Site);
-	int8_t operator[] (int x, int y) const;
-	int8_t& operator[] (int x, int y);
+	val_t operator[] (Site) const;
+	val_t& operator[] (Site);
+	val_t operator[] (int x, int y) const;
+	val_t& operator[] (int x, int y);
 
 	// Lite des sites directement voisins d'un site `s`
 	std::array<Site,4> voisins (Site s) const;
 
 	// Construction et destruction
 	Réseau (int nx, int ny);
-	Réseau (int nx, int ny, int8_t valeur_def);
-	Réseau (const Réseau&) = delete;
+	Réseau (int nx, int ny, val_t valeur_def);
+	Réseau (const Réseau&);
 	~Réseau ();
 
 	// Affichage textuel et graphique (SFML)
 	void affiche_console () const;
 	void affiche_SFML (sf::RenderWindow& window, float pos_x, float pos_y) const;
 	sf::Vector2f taille_affichage_SFML () const;
+	static constexpr float taille_site_affichage_SFML = 1;
+
+	// Décimation
+	Réseau decimate () const;
 
 	// Itérateur de sites pour les range-based loops :
 public:

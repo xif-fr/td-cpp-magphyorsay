@@ -80,23 +80,3 @@ void ising_init_alea (Réseau& S) {
 		S[i] = 2 * (rng()%2) - 1;
 	}
 }
-
-/*
-Réseau decimate (const Réseau& S) {
-	Réseau S_decim (S.nx / 3, S.ny / 3);
-	for (int x_decim = 0; x_decim < S_decim.nx; x_decim++) {
-		for (int y_decim = 0; y_decim < S_decim.ny; y_decim++) {
-			int8_t s_decim = 0;
-			for (int dx = -1; dx <= +1; dx++) {
-				for (int dy = -1; dy <= +1; dy++) {
-					int x = 3 * x_decim + dx + 1;
-					int y = 3 * y_decim + dy + 1;
-					s_decim += S[x,y];
-				}
-			}
-			s_decim = s_decim > 0 ? 1 : -1;
-			S_decim[x_decim,y_decim] = s_decim;
-		}
-	}
-	return S_decim;
-}*/

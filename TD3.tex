@@ -7,7 +7,8 @@
 \usepackage{amsmath,amssymb}
 \usepackage{stmaryrd}
 \usepackage{mathtools} 
-\usepackage{extarrows} 
+\usepackage{extarrows}
+\usepackage{oplotsymbl}
 
 \usepackage{graphicx}
 \usepackage{psfrag}
@@ -141,7 +142,14 @@ Maintenant que l'encapsulation est faite, on peut se permettre de modifier le fo
 
 Ajouter des attributs privés stockant la norme et l'argument comme présenté en introduction. Modifier les setters et les constructeurs pour garder sychronisé ces nouveaux attributs polaires avec les attributs carthésiens, et vice-versa, lorsque des modifications sont effectuées. On rajoutera enfin un setter \inline{void set_polar(double r, double theta)}.\\
 
-Pour éviter de dupliquer le code, on pourra éventuellement créer des méthodes privées \inline{void sync_carth_to_polar()} et \inline{void sync_polar_to_carth()}.
+En résumé on veut que :
+\begin{itemize}
+  \item à chaque fois que la partie réelle ou imaginaire est modifiée, les attributs stockant la norme et l'argument soient mis à jour aussi
+  \item à chaque fois que la norme ou l'argument est modifiée, les attributs stockant les parties réelles et imaginaires soient mis à jour aussi
+\end{itemize}
+pour que nos 4 attributs soient toujours synchronisés.\\
+
+Pour éviter de dupliquer le code, on pourra éventuellement créer des méthodes privées \inline{void sync_carth_to_polar()} et \inline{void sync_polar_to_carth()}.\\
 
 Pour ne pas passer trop de temps sur ce TD, on pourra supprimer les opérateurs surchargés (en particulier les opérateurs modifiant l'objet : \inline{+=}, \inline{*=}...).
 
@@ -311,7 +319,16 @@ Le hamiltonien du modèle d'Ising étant local (voir la section suivante), la se
 
 \subsection{Écriture de la classe \inline{Réseau}}
 
-Comme dans l'exemple de la classe \inline{Matrice} présenté en cours, nous allons "aplatir" la matrice en un tableau 1D, car c'est plus performant que de faire des tableaux de tableaux, et car cela se généralise mieux à un réseau quelconque. Une position $(x,y)$ sera alors encodée par l'indice $i = x + n_x \times y$ (ou $i' = n_y \times x + y$ si l'on préfère). Pour des raisons de performance, il est parfois plus utile de travailler avec $(x,y)$ ou avec $i$. Comme le simulation du modèle d'Ising nécessite les deux, nous allons conserver ces deux types d'indice dans un type commun \inline{Site} :
+Comme dans l'exemple de la classe \inline{Matrice} présenté en cours, nous allons "aplatir" la matrice en un tableau 1D, car c'est plus performant que de faire des tableaux de tableaux, et car cela se généralise mieux à un réseau quelconque. Une position $(x,y)$ sera alors encodée par l'indice $i = x + n_x \times y$ (ou $i' = n_y \times x + y$ si l'on préfère) :
+\begin{equation*}
+[a_{x y}]_{x, y} = \left[\begin{array}{cc}
+     a_{0 0} & a_{0 1}\\
+     a_{1 0} & a_{1 1}\\
+     a_{2 0} & a_{2 1}
+   \end{array}\right] \quad \longrightarrow \quad [a_i]_i = \left[a_{0 0}, a_{0 1},
+   a_{1 0}, a_{1 1}, a_{2 0}, a_{2 1}\right] 
+\end{equation*}
+Pour des raisons de performance, il est parfois plus utile de travailler avec $(x,y)$ ou avec $i$. Comme le simulation du modèle d'Ising nécessite les deux, nous allons conserver ces deux types d'indice dans un type commun \inline{Site} :
 \begin{minted}[breaklines]{c++}
 class Site {
   int _index;
@@ -319,7 +336,9 @@ class Site {
   int _y;
 };
 \end{minted}
-Ceci est pour un réseau carré, et les plus courageux feront le reste du TD avec un réseau hexagonal (ou plus exactement \emph{en nid d'abeille}) pour pimenter l'exercice\footnote{Le réseau hexagonal est plus compliqué à implémenter car bipartite (ce n'est pas un réseau de Bravais). Dans ce réseau, chaque site est relié à 3 voisins contrairement à 4 pour un réseau carré ou à 6 pour un réseau triangulaire. Une façon de faire est de stocker les deux réseaux de Bravais de façon interlacée, et de spécifier, en plus de \inline{x} et \inline{y}, sur quel sous-réseau de Bravais le site est situé, et donc introduire une 3è coordonnée (\inline{a} par exemple, qui vaudra \inline{true} ou \inline{false}).}. Comme \inline{_index}, \inline{_x} et \inline{_y} sont gérés et synchronisés par la classe \inline{Réseau} uniquement, et que l'utilisateur n'a pas à trifouiller ces données internes, nous allons les déclarer \inline{private}. En contrepartie, il faudra autoriser la classe \inline{Réseau} à y accéder. Une solution adaptée est d'utiliser une notion qui n'a pas été vue en cours : les classes et fonctions amies. Pour faire court, si la classe \inline{Site} déclare \inline{Réseau} comme classe amie, ses attributs privés seront accessibles dans les méthodes de \inline{Réseau}. Il faut utiliser le mot-clé \inline{friend} pour cela :
+Ceci est pour un réseau carré, et les plus courageux feront le reste du TD avec un réseau hexagonal (ou plus exactement \emph{en nid d'abeille}) pour pimenter l'exercice\footnote{Le réseau hexagonal est plus compliqué à implémenter car bipartite (ce n'est pas un réseau de Bravais). Dans ce réseau, chaque site est relié à 3 voisins contrairement à 4 pour un réseau carré ou à 6 pour un réseau triangulaire. Une façon de faire est de stocker les deux réseaux de Bravais de façon interlacée, et de spécifier, en plus de \inline{x} et \inline{y}, sur quel sous-réseau de Bravais le site est situé, et donc introduire une 3è coordonnée (\inline{a} par exemple, qui vaudra \inline{true} ou \inline{false}).}. Pour un niveau de difficulté intermédiaire, on pourra tenter un réseau triangulaire\footnote{Qui, lui, est un réseau de Bravais et peut être représenté comme une matrice, comme le réseau carré. Dans le réseau triangulaire, chaque site interragit avec 6 sites voisins.}.
+
+Comme \inline{_index}, \inline{_x} et \inline{_y} sont gérés et synchronisés par la classe \inline{Réseau} uniquement, et que l'utilisateur n'a pas à trifouiller ces données internes, nous allons les déclarer \inline{private}. En contrepartie, il faudra autoriser la classe \inline{Réseau} à y accéder. Une solution adaptée est d'utiliser une notion qui n'a pas été vue en cours : les classes et fonctions amies. Pour faire court, si la classe \inline{Site} déclare \inline{Réseau} comme classe amie, ses attributs privés seront accessibles dans les méthodes de \inline{Réseau}. Il faut utiliser le mot-clé \inline{friend} pour cela :
 \begin{minted}[breaklines]{c++}
 class Site {
 private:
@@ -335,18 +354,24 @@ private:
 \end{minted}
 Nous avons au passage ajouté deux constructeurs, ce qui est nécessaire dès que l'on a des attributs privés. Pour faire plus propre, on pourra déclarer cette classe au sein de la classe \inline{Réseau}.\\
 
-À partir de ce type, écrire une classe \inline{Réseau} en vous inspirant de la classe \inline{Matrice} pour le stockage de données (allocation dynamique au au lieu d'utiliser \inline{std::vector})\footnote{Bien sûr, dans la vraie vie, on ne s'embête pas à faire cette allocation manuelle, on utilisera les types automatiques déjà présent dans la bibliothèque standard.}. Notre matrice sera de type \inline{int8_t}, qui est le plus petit entier signé possible. Les tailles $n_x$ et $n_y$ seront stockées sous forme de constantes. Écrivez un constructeur \inline{Réseau (int nx, int ny, int8_t valeur_def)}, ainsi qu'un destructeur et un constructeur par copie. Bien sûr, testez votre code en créant une matrice, puis en la copiant. On pourra rajouter temporairement un affichage de l'adresse de l'objet courant ainsi que l'adresse de la zone mémoire allouée, pour être certain que l'on fait correctement les choses.\\
+À partir de ce type, écrire une classe \inline{Réseau} en vous inspirant de la classe \inline{Matrice} vue en cours pour le stockage de données (allocation dynamique au lieu d'utiliser \inline{std::vector})\footnote{Bien sûr, dans la vraie vie, on ne s'embête pas à faire cette allocation manuelle, on utilisera les types automatiques déjà présent dans la bibliothèque standard.}. Notre matrice sera de type \inline{int8_t}, qui est le plus petit entier signé possible. Les tailles $n_x$ et $n_y$ seront stockées sous forme de constantes. Écrivez un constructeur \inline{Réseau (int nx, int ny, int8_t valeur_def)}, ainsi qu'un destructeur et un constructeur par copie. Bien sûr, testez votre code en créant une matrice, puis en la copiant. On pourra rajouter temporairement un affichage de l'adresse de l'objet courant ainsi que l'adresse de la zone mémoire allouée, pour être certain que l'on fait correctement les choses.\\
 
-Une fois cette base écrite, on aura deux méthodes pour générer un objet de type \inline{Site} :
+Une fois cette base écrite, on aura deux méthodes dans la classe \inline{Réseau} pour générer un objet de type \inline{Site} :
 \begin{itemize}
-  \item Une méthode privée \inline{Site site_index (int index) const;} prenant en argument l'indice $i$ et déduisant $x$ et $y$ (privée car l'utilisateur de la classe n'a que faire de cet indiçage interne)
-  \item Une méthode publique \inline{Site site_xy (int x, int y) const;} prenant en argument $x$ et $y$ et déduisant $i$. Les conditions limites périodiques seront implémentés ici, et ramènera systématiquement $x$ et $y$ dans $\llbracket 0,n_x\!-\!1 \rrbracket$ et $\llbracket 0,n_y\!-\!1\rrbracket$ respectivement\footnote{Attention, le modulo \texttt{\%n} appliqué sur un entier signé ramène l'entier dans $\rrbracket-n,n\llbracket$, au plus proche de zéro, ce qui n'est pas pratique pour nous. Un façon perfomante de faire est d'ajouter $n$ au résultat du modulo si celui-ci est négatif.}.
+  \item Une méthode privée "\inline{Site site_index (int index) const;}" prenant en argument l'indice $i$ et déduisant $x$ et $y$ (privée car l'utilisateur de la classe n'a que faire de cet indiçage interne)
+  \item Une méthode publique "\inline{Site site_xy (int x, int y) const;}" prenant en argument $x$ et $y$ et déduisant $i$. Les conditions limites périodiques seront implémentés ici, et ramènera systématiquement $x$ et $y$ dans $\llbracket 0,n_x\!-\!1 \rrbracket$ et $\llbracket 0,n_y\!-\!1\rrbracket$ respectivement\footnote{Attention, le modulo \texttt{\%n} appliqué sur un entier signé ramène l'entier dans $\rrbracket-n,n\llbracket$, au plus proche de zéro, ce qui n'est pas pratique pour nous. Un façon perfomante de faire est d'ajouter $n$ au résultat du modulo si celui-ci est négatif.}.
 \end{itemize}
 On écrira aussi une méthode \inline{Site site_aleatoire () const;} renvoyant un site aléatoire du réseau.\\
 
-Ensuite, ayant un "\inline{Site s;}" il nous faut une méthode pour accéder à la valeur du site \inline{s}. Pour cela, on définiera \inline{int8_t operator[] (Site) const;} et \inline{int8_t& operator[] (Site);} pour respectivement lire et modifier un site. Optionnellement, on pourra déclarer \inline{int8_t& operator[] (int x, int y);} pour que l'utilisateur puisse accéder directement à un site $(x,y)$ sans avoir à écrire \inline{mon_reseau[mon_reseau.site_xy(x,y)] = ...} (peut nécessiter l'option de compilation \texttt{-std=c++2b}).\\
+Ensuite, ayant un "\inline{Site s;}" il nous faut une méthode pour accéder à la valeur du site \inline{s}. Pour cela, on définiera \inline{int8_t operator[] (Site) const;} et \inline{int8_t& operator[] (Site);} pour respectivement lire et modifier un site. Exemple d'utilisation :
+\begin{minted}[fontsize=\footnotesize]{c++}
+Site s = mon_reseau.site_xy(7,15);
+cout << mon_reseau[s] << endl; // lecture de la valeur du site (7,15)
+mon_reseau[s] = 4; // modification de la valeur du site (7,15), rendu possible car une référence int8_t& est renvoyée
+\end{minted}
+Optionnellement, on pourra déclarer \inline{int8_t& operator[] (int x, int y);} pour que l'utilisateur puisse accéder directement à un site $(x,y)$ sans avoir à écrire \inline{mon_reseau[mon_reseau.site_xy(x,y)] = ...} (peut nécessiter l'option de compilation \texttt{-std=c++2b}).\\
 
-Enfin, écrire une méthode \inline{std::array<Site,4> voisins (Site s) const;} qui renvoit les 4 voisins d'un site \inline{s} (ou les 3 voisins pour un réseau hexagonal). On notera l'utilisation de \inline{std::array<Type,N>}\footnote{Présent dans le header \texttt{<array>}}, qui n'est rien d'autre qu'un tableau de taille fixe \inline{N} glorifié, mais plus pratique car permettant, par exemple, d'utiliser les boucles "for in" et de connaître sa taille avec \inline{.size()}. Il peut être initialisé ainsi : \inline{std::array<int,3> tab = { 42, 41, 40 };}. Bien sûr, aidez vous des méthodes déclarées précédemment.\\
+Enfin, écrire une méthode \inline{std::array<Site,4> voisins (Site s) const;} qui renvoit les 4 voisins d'un site \inline{s} (ou les 3 voisins pour un réseau hexagonal, ou les 6 voisins pour un réseau triangulaire). On notera l'utilisation de \inline{std::array<Type,N>}\footnote{Présent dans le header \texttt{<array>}}, qui n'est rien d'autre qu'un tableau de taille fixe \inline{N} glorifié, mais plus pratique car permettant, par exemple, d'utiliser les boucles "for in" et de connaître sa taille avec \inline{.size()}. Il peut être initialisé ainsi : \inline{std::array<int,3> tab = { 42, 41, 40 };}. Bien sûr, aidez vous des méthodes déclarées précédemment.\\
 
 Cette classe peut sembler intimidante à écrire, mais en s'y prennant bien, \filename{reseau.h} et \filename{reseau.cpp} peuvent avoir une taille de l'ordre de 60 lignes de code seulement chacun, commentaires inclus.
 \begin{correction}
@@ -578,6 +603,7 @@ Pour un réseau hexagonal, on affichera chaque site sous forme d'un triangle, co
 \begin{center}
 \includegraphics[width=0.3\linewidth]{TD3/affichage_réseau_hexagonal.png}
 \end{center}
+Pour un réseau triangulaire, on pourra afficher chaque site sous forme d'un hexagone, collé à ses six voisins.
 
 \begin{correction}
 On n'oubliera pas d'inclure \inline{<SFML/Graphics/RenderWindow.hpp>} dans le header. Voilà une implémentation possible de la méthode d'affichage :
@@ -787,16 +813,18 @@ bool ising_metropolis_step (Réseau& S, float beta, float B) {
 
 Il ne reste plus qu'à écrire la boucle principale du programme. Initialisez une configuration où chaque site est de valeur aléatoire $\pm 1$. Ensuite, écrivez une boucle (infinie pour le moment) où vous effectuez un pas de l'algorithme de Metropolis. Pour l'instant, on ne calcule aucune observable. Contentez-vous d'afficher la configuration instantannée (disons tous les $10^6$ pas pour ne pas ralentir trop le programme). On commencera avec $B=0$ et en se plaçant quelque part autour de la température critique, qui vaut
 \begin{equation}
-\beta_\text{c} = \frac{\ln(1+\sqrt{2})}{2}
+\beta_\text{c}^\square = \frac{\ln(1+\sqrt{2})}{2}
 \end{equation}
-pour un réseau carré en deux dimensions (résultat analytique difficile à obtenir, Lars Onsager en 1944), et
+pour un réseau carré en deux dimensions (résultat analytique difficile à obtenir, Lars Onsager en 1944). Pour un réseau hexagonal ou triangulaire, la température critique (qui est un résltat analytique relativement simple à calculer par dualité\footnote{Il s'agit d'un argument magnifique de dualité entre le réseau triangulaire et hexagonal. On pourra par exemple consulter \url{http://chimera.roma1.infn.it/ENZO/FC/ESTRATTI/DUALITY/mussardo_duality.pdf}, partie 4.3. Le résultat pour le réseau hexagonal est en dernière page, où $L=J$. On a bien
 \begin{equation}
 \sinh(2\,J\,\beta_\text{c})=\sqrt{3} \quad \xLeftrightarrow[J=1]{} \quad \beta_\text{c} = \frac{\ln(2+\sqrt{3})}{2}
 \end{equation}
+}) est donnée respectivement par
+\begin{equation}
+\beta_\text{c}^\triangle = \frac{\ln(3)}{4} \quad\text{et}\quad \beta_\text{c}^{\hexago} = \frac{\ln(2+\sqrt{3})}{2}
+\end{equation}
 
- pour un réseau hexagonal (résltat analytique relativement simple à calculer par dualité\footnote{Il s'agit d'un argument magnifique de dualité avec le réseau triangulaire. On pourra par exemple consulter \url{http://chimera.roma1.infn.it/ENZO/FC/ESTRATTI/DUALITY/mussardo_duality.pdf}, partie 4.3. Le résultat est en dernière page, où $L=J$.}).\\
-
- Une taille raisonnable de système est $200 \times 100$. Pour ceux affichant le système dans le terminal, n'hésitez pas à dézoomer fortement ou réduire la taille de la police de caractères pour voir le système dans son entièreté. Pour ceux ayant mis en place l'affichage graphique, un système de $300 \times 300$ est envisageable. Enfin, pour garantir une bonne performance malgré les couches d'abstraction, on compilera avec les option \inline{-Ofast -flto} (à la fois à la compilation et à l'édition de liens).\\
+Une taille raisonnable de système est $200 \times 100$. Pour ceux affichant le système dans le terminal, n'hésitez pas à dézoomer fortement ou réduire la taille de la police de caractères pour voir le système dans son entièreté. Pour ceux ayant mis en place l'affichage graphique, un système de $300 \times 300$ est envisageable. Enfin, pour garantir une bonne performance malgré les couches d'abstraction, on compilera avec les option \inline{-Ofast -flto} (à la fois à la compilation et à l'édition de liens).\\
 
 \begin{correction}
 Voilà un exemple du programme principal. La fonction \inline{ising_metropolis_step} est déclarée directement dans le \filename{main.cpp}, mais il est préférable d'avoir une paire de fichiers \filename{ising.h}/\filename{ising.cpp} séparée. On a implémenté à la fois l'affichage dans la console et avec la SFML dans une fenêtre.
@@ -880,7 +908,7 @@ Voilà deux configurations typiques aux point critique pour un réseau carré à
 \includegraphics[height=0.46\linewidth]{TD3/T_sur_Tc_1.0.png}
 \includegraphics[height=0.46\linewidth]{TD3/T_sur_Tc_1.0_hexa.png}
 \end{center}
-On ne remarque pas de différences structurelles entre les deux réseau, et c'est bien normal : proche du point critique, les détails microscopiques du système ne comptent plus, et les comportements relatifs au point critique sont identiques. Seule $T_\text{c}$ change. On dit que deux réseaux systèmes appartiennent à la même \emph{classe d'universalité}.
+On ne remarque pas de différences structurelles entre réseaux carrés, triangulaires ou haxagonaux, et c'est bien normal : proche du point critique, les détails microscopiques du système ne comptent plus, et les comportements relatifs au point critique sont identiques. Seule $T_\text{c}$ change. On dit que ces systèmes appartiennent à la même \emph{classe d'universalité}.
 \end{correction}
 
 \subsection{Calcul de quelques observables}
@@ -918,7 +946,7 @@ std::tuple<float,float> ising_magnétisation_énergie (const Réseau& S, float B
 
 Enfin, écrivez les valeurs instantannées des observables ainsi que le nombre de pas effectués dans un fichier texte pour pouvoir ensuite afficher les courbes dans un outil externe. Vous pouvez vous inspirer du code suivant :
 
-\begin{minted}[samepage]{c++}
+\begin{minted}[samepage,fontsize=\footnotesize]{c++}
 std::ofstream fichier_r ("ising_magnétisation_énergie.txt");
 
 while (steps < 1000000000) {
@@ -936,7 +964,7 @@ while (steps < 1000000000) {
 \end{minted}
 
 N'hésitez pas à effectuer jusqu'à $10^8$ ou $10^9$ pas de l'algorithme pour un système de $200 \times 100$. Enregistrez quelques réalisations (au moins 2 ou 3) pour un même $(T,B)$ de votre choix, et affichez les courbes avec un outil externe de votre choix. Le code Python suivant permet d'ouvrir quelques fichiers \filename{ising\_magnétisation\_énergie.$N$.txt} et d'afficher les courbes de façon superposée :
-\begin{minted}[samepage]{python}
+\begin{minted}[samepage,fontsize=\footnotesize]{python}
 import numpy as np
 import matplotlib.pyplot as plt
 fig, (ax1,ax2) = plt.subplots(2,1, figsize=(8,8), sharex=True)
@@ -1107,7 +1135,75 @@ Les barres d'erreurs représentent ici la variance de la série de magnétisatio
 
 \subsection{[Bonus] Observation de l'invariance d'échelle par décimation}
 
-À venir...
+Nous avons observé l'aspect auto-similaire du système lorsque l'on "regarde le système de loin" au point critique. Il existe une procédure plus rigoureuse et très puissante (aussi bien numériquement que théoriquement) permettant de quantifier les caractéristiques d'un système lorsque l'on "dézoom", lorsque l'on \emph{change d'échelle spatiale}. Il s'agit de regrouper un certain nombre de degrés de libertés (de valeurs de sites dans notre cas) en un seul degré de liberté. On parle de \emph{décimation} de degrés de liberté. Il s'agit de volontairement perdre de l'information sur les détails microscopiques pour avoir une image plus globale du système.\\
+
+Prenons un cas concret : un réseau carré de $3N\times 3N$. On va former des plaquettes carrées de $3\times 3$ sites, regroupant les sites $9$ par $9$. Ces plaquettes forment un pavage de notre réseau initial, formant un réseau de $N\times N$. Pour chaque site de notre "super-réseau", on prend les valeurs des $9$ sites composant la plaquette associée, et on compte combien de sites sont \emph{up} ou \emph{down}. La valeur de notre "super-site" est cette qui domine dans la plaquette : \emph{up} si la majorité est \emph{up}, et \emph{down} si la majorité est \emph{down}. On obtient alors notre système "dézoomé" d'un facteur 3.\\
+
+On répète cette procédure dire de \emph{décimation} autant de fois que l'on peut. La capture d'écran ci-dessous montre un exemple sur une configuration typique pour $T<T_\text{c}$ :\\
+\vspace{1em}
+\includegraphics[width=1\linewidth]{TD3/decim_T_sur_Tc_0.98.png}\\
+
+Bien sûr, les configurations de plus grande échelle obtenues sont plus petites, mais ce qui nous intéresse est : \emph{à quoi ressemblent-elles ?} Dans le cas ci-dessus, on remarque que l'on tend vers une configuration uniformément magnétisée, les fluctuations disparaissant à grande échelle. Si l'on devrait décrire cette configuration de grande échelle en terme des paramètres initiaux du modèle $J$ et $T$, on dirait que l'on tend à grande échelle vers $T/J\to 0$ (température nulle).\\
+
+On dit qu'à chaque d'étape de changement d'échelle, c'est tout comme si on avait encore un modèle d'Ising, mais avec $J$ et $T$ \emph{renormalisés}. Les techniques dites "de renormalisation" ont précisemment pour objectif de voir vers quels valeurs de paramètres tend-t-on lorsque l'on tend à grande échelle, avec des méthodes numériques ou analytiques. Il s'agit d'une idée centrale dans l'étude moderne des transitions de phases, et d'une grande puissance.\\
+
+Nous allons nous contenter ici de regarder à quoi ressemble le système "dézoomé" pour différentes températures. Le code suivant est une ébauche d'une fonction prennant un objet \inline{Réseau} carré, et retournant un objet \inline{Réseau} de taille inférieure, résulat de la procédure de décimation expliquée ci-dessus.
+
+\begin{minted}[fontsize=\footnotesize,mathescape=true]{c++}
+Réseau decimate (const Réseau& S) {
+
+  // Création d'un sur-réseau de taille $N\times N$ lorsque le réseau initial est de taille $3N\times 3N$
+  Réseau S_decim (r.nx / 3, r.ny / 3);
+
+  // On parcours les sites dans le sur-réseau
+  for (int x_decim = 0; x_decim < S_decim.nx; x_decim++) {
+    for (int y_decim = 0; y_decim < S_decim.ny; y_decim++) {
+      Site s = S_decim.site_xy(x_decim,y_decim);
+
+      // Calcul de la somme des spins sur la plaquette de $3 \times 3$ associée à notre "sur-site"
+      int8_t sum = 0;
+      for (int dx = -1; dx <= +1; dx++) {
+        for (int dy = -1; dy <= +1; dy++) {
+          sum += S[S.site_xy(
+            3 * x_decim + 1 + dx,
+            3 * y_decim + 1 + dy
+          )];
+        }
+      }
+
+      S_decim[s] = /*...*/;
+    }
+  }
+  return S_decim;
+}
+\end{minted}
+
+Complétez le code et testez si il produit bien le résultat attendu. Explorez ensuite à quoi ressemble le système "dézoomé" pour différentes températures. Qu'avons-nous au point critique ?
+
+\begin{correction}
+Pour déterminer la valeur de notre sur-site, il suffit de faire la somme des sites de la plaquette. Si les sites \emph{down} sont majoritaires, la somme sera négative, et on attribue $-1$. Sinon, la somme est positive, et on attribue $+1$. Comme le nombre de sites est impair, on ne peut jamais tomber sur une somme valant $0$.
+
+\begin{minted}[fontsize=\footnotesize]{c++}
+S_decim[s] = (sum > 0) ? 1 : -1;
+\end{minted}
+
+On a déjà vu que pour $T<T_\text{c}$ ($T=0.98\,T_\text{c}$ ci-dessus), le système ressemble à un système de température nulle à grande échelle (système décimé uniformément noir ou blanc, complètement magnétisé et sans fluctuations thermiques).\\
+
+Pour $T>T_\text{c}$, au contraire, le système semble de plus en plus désorganisé à grande échelle :\\
+\includegraphics[width=1\linewidth]{TD3/decim_T_sur_Tc_1.1.png}\\
+(ici pour $T=1.1\,T_\text{c}$). Il n'y a plus aucune magnétisation dans le système décimé, même locale (pas de zones organisées). Cela ressemble donc à un système de température infinie (ou sans interactions).\\
+
+Enfin, pour $T = T_\text{c}$, on obtient par exemple ceci :\\
+\includegraphics[width=1\linewidth]{TD3/decim_T_sur_Tc_1.00.png}\\
+On remarque que le structure spatiale du système ne semble pas vraiment changer avec la décimation : le système décimé pourrait tout à faire être un petit bout du système initial, ce qui n'était pas le cas pour $T = T_\text{c}$. Le système semble alors auto-similaire, "fractal", on a \emph{invariance d'échelle}. Cela ressemble donc à un système à $T = T_\text{c}$. Autrement dit, \emph{le point critique est un point fixe de la procédure de renormalisation par changement d'échelle} :
+
+\begin{center}
+\includegraphics[width=0.5\linewidth]{TD3/renorm.pdf}
+\end{center}
+
+\end{correction}
+
+%-----------------------------------
 
 \section{[Bonus] Que coûtent l'abstraction et la compilation séparée ?}
 

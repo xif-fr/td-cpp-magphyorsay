@@ -2,13 +2,24 @@
 
 /* Construction et destruction */
 
-Réseau::Réseau (int nx, int ny) : nx(nx), ny(ny), ntot(nx*ny) {
-	data = new int8_t[nx*ny];
+Réseau::Réseau (int nx, int ny)
+	: nx(nx), ny(ny), ntot(nx*ny) 
+{
+	data = new val_t[nx*ny];
 }
 
-Réseau::Réseau (int nx, int ny, int8_t valeur_def) : Réseau(nx,ny) {
+Réseau::Réseau (int nx, int ny, val_t valeur_def)
+	: Réseau(nx,ny)
+{
 	for (int i = 0; i < ntot; i++)
 		data[i] = valeur_def;
+}
+
+Réseau::Réseau (const Réseau& o)
+	: Réseau(o.nx, o.ny)
+{
+	for (int i = 0; i < ntot; i++)
+		data[i] = o.data[i];
 }
 
 Réseau::~Réseau () {
@@ -48,19 +59,19 @@ Réseau::Site Réseau::site_aleatoire () const {
 
 /* Accès à la valeur d'un site */
 
-int8_t Réseau::operator[] (Site s) const {
+Réseau::val_t Réseau::operator[] (Site s) const {
 	return data[s._index];
 }
 
-int8_t& Réseau::operator[] (Site s) {
+Réseau::val_t& Réseau::operator[] (Site s) {
 	return data[s._index];
 }
 
-int8_t Réseau::operator[] (int x, int y) const {
+Réseau::val_t Réseau::operator[] (int x, int y) const {
 	return data[site_xy(x,y)._index];
 }
 
-int8_t& Réseau::operator[] (int x, int y) {
+Réseau::val_t& Réseau::operator[] (int x, int y) {
 	return data[site_xy(x,y)._index];
 }
 
@@ -86,16 +97,16 @@ bool Réseau::sites_iterator_t::operator!= (Réseau::sites_iterator_end_t) const
 
 /* Voisinage d'un site */
 
-/*std::array<Réseau::Site,4> Réseau::voisins (Site s) const {
+std::array<Réseau::Site,4> Réseau::voisins (Site s) const {
 	return {
 		site_xy( s._x+1, s._y   ),
 		site_xy( s._x,   s._y-1 ),
 		site_xy( s._x-1, s._y   ),
 		site_xy( s._x,   s._y+1 ),
 	};
-}*/
+}
 
-std::array<Réseau::Site,4> Réseau::voisins (Site s) const {
+/*std::array<Réseau::Site,4> Réseau::voisins (Site s) const {
 	// version ~15% plus performante que celle ci-dessus
 	return {
 		site_xy_brut( (s._x+1)%nx,    s._y          ),
@@ -103,7 +114,7 @@ std::array<Réseau::Site,4> Réseau::voisins (Site s) const {
 		site_xy_brut( (s._x-1+nx)%nx, s._y          ),
 		site_xy_brut(  s._x,         (s._y+1)%ny    ),
 	};
-}
+}*/
 
 /* Affichage du système */
 
@@ -112,7 +123,7 @@ std::array<Réseau::Site,4> Réseau::voisins (Site s) const {
 void Réseau::affiche_console () const {
 	for (int y = 0; y < ny; y++) {
 		for (int x = 0; x < nx; x++) {
-			int8_t v = data[ site_xy(x,y)._index ];
+			val_t v = data[ site_xy(x,y)._index ];
 			if (v < 0)
 				std::cout << "■";
 			else if (v > 0)
@@ -130,21 +141,90 @@ void Réseau::affiche_SFML (sf::RenderWindow& window, float pos_x, float pos_y) 
 
 	// rectangle de 2x2 pixels
 	sf::RectangleShape sq;
-	sq.setSize(sf::Vector2f(2,2));
+	sq.setSize(sf::Vector2f(taille_site_affichage_SFML,taille_site_affichage_SFML));
 
 	for (int x = 0; x < nx; x++) {
 		for (int y = 0; y < ny; y++) {
-			int8_t v = data[ site_xy(x,y)._index ];
+			val_t v = (*this)[x,y];
 			sq.setPosition(sf::Vector2f(
-				pos_x + 2 * x,
-				pos_y + 2 * (ny - y - 1)
+				pos_x + taille_site_affichage_SFML * x,
+				pos_y + taille_site_affichage_SFML * (ny - y - 1)
 			));
-			sq.setFillColor( (v>0) ? sf::Color::White : sf::Color::Black);
+			if      (v > 0) sq.setFillColor(sf::Color::White);
+			else if (v < 0) sq.setFillColor(sf::Color::Black);
+			else            sq.setFillColor(sf::Color(127,127,127));
 			window.draw(sq);
 		}
 	}
 }
 
 sf::Vector2f Réseau::taille_affichage_SFML () const {
-	return sf::Vector2f( 2*nx, 2*ny );
+	return sf::Vector2f( taille_site_affichage_SFML*nx, taille_site_affichage_SFML*ny );
 }
+
+/* Décimation (aggrégation de plaquettes et détermination de la valeur majoritaire) */
+
+#include <map>
+#include <algorithm>
+
+Réseau Réseau::decimate () const {
+	Réseau S_decim (nx / 3, ny / 3);
+	for (int x_decim = 0; x_decim < S_decim.nx; x_decim++) {
+		for (int y_decim = 0; y_decim < S_decim.ny; y_decim++) {
+
+			val_t sum = 0;
+			for (int dx = -1; dx <= +1; dx++) {
+				for (int dy = -1; dy <= +1; dy++) {
+					int x = 3 * x_decim + dx + 1;
+					int y = 3 * y_decim + dy + 1;
+					val_t v = (*this)[site_xy_brut(x,y)];
+					sum += v;
+				}
+			}
+			val_t maj_val = (sum > 0) ? 1 : -1;
+			S_decim[x_decim,y_decim] = maj_val;
+		}
+	}
+	return S_decim;
+}
+
+/*Réseau Réseau::decimate () const {
+	Réseau S_decim (nx / 2, ny / 2);
+	for (int x_decim = 0; x_decim < S_decim.nx; x_decim++) {
+		for (int y_decim = 0; y_decim < S_decim.ny; y_decim++) {
+
+			std::map< val_t, uint8_t > counters;
+			//val_t sum = 0;
+			for (int dx = 0; dx <= +1; dx++) {
+				for (int dy = 0; dy <= +1; dy++) {
+					int x = 2 * x_decim + dx;
+					int y = 2 * y_decim + dy;
+					val_t v = (*this)[site_xy_brut(x,y)];
+					if (v != 0) {
+						counters.insert({v, 0});
+						counters[v]++;
+					}
+					//sum += v;
+				}
+			}
+			val_t maj_val = 0;
+			uint8_t maj_cnt = 0, min_cnt = -1;
+			for (auto [val,cnt] : counters) {
+				if (cnt > maj_cnt) {
+					maj_val = val;
+					maj_cnt = cnt;
+				}
+				if (cnt < min_cnt) 
+					min_cnt = cnt;
+			}
+			if (counters.size() > 1 and maj_cnt == min_cnt) {
+				// pas de majoritaire
+				maj_val = 0;
+			}
+			//val_t domin_value = (sum > 0) ? 1 : -1;
+			S_decim[x_decim,y_decim] = maj_val;
+		}
+	}
+	return S_decim;
+}*/
+

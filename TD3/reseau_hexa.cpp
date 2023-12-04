@@ -115,7 +115,6 @@ constexpr float trilatt_draw_spin_sz = 4;
 
 void Réseau::affiche_SFML (sf::RenderWindow& window, float pos_x, float pos_y) const {
 
-	
 	sf::ConvexShape tri_up;
 	tri_up.setPointCount(3);
 	tri_up.setPoint(0, sf::Vector2f(0,0));
@@ -136,7 +135,9 @@ void Réseau::affiche_SFML (sf::RenderWindow& window, float pos_x, float pos_y) 
 		float y = (ny - s._y - 1.f) * (sqrt(3)/2) * trilatt_draw_spin_sz;
 		sf::ConvexShape& tri = s._a ? tri_down : tri_up;
 		tri.setPosition(pos_x+x, pos_y+y);
-		tri.setFillColor( (v>0) ? sf::Color::White : sf::Color::Black );
+		if      (v > 0) tri.setFillColor(sf::Color::White);
+		else if (v < 0) tri.setFillColor(sf::Color::Black);
+		else            tri.setFillColor(sf::Color(127,127,127));
 		window.draw(tri);
 	}
 
@@ -145,3 +146,7 @@ void Réseau::affiche_SFML (sf::RenderWindow& window, float pos_x, float pos_y) 
 sf::Vector2f Réseau::taille_affichage_SFML () const {
 	return sf::Vector2f( trilatt_draw_spin_sz * (nx+1), trilatt_draw_spin_sz * ny * sqrt(3)/2 );
 }
+
+/* Décimation (aggrégation de plaquettes et détermination de la valeur majoritaire) */
+
+
