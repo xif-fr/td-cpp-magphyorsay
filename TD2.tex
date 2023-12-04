@@ -1395,6 +1395,8 @@ plt.imshow(Nit, extent=[-a,a,-a,a], cmap='gnuplot2', vmin=3, vmax=25)
 \includegraphics[width=0.95\linewidth]{TD2/newton_newton_niter.a1.pdf}
 \end{correction}
 
+Note : Les factales de Newton s'inscrivent dans le domaine plus général de la \emph{dynamique holomorphique}. Pour une compréhension plus profonde des mécanismes à l'\oe uvre et de l'émergence de ce comportement fractal, on pourra visionner l'excellente vidéo de 3Blue1Brown sur le sujet : \url{https://www.youtube.com/watch?v=-RdOwhmqP5s}
+
 \subsection{Amortissement [bonus]}
 
 Avec le polynôme $z^3-1$, on observe une convergence de la méthode de Newton presque partout. Mais il n'est pas garanti que ça soit toujours le cas. Étudions $f(z)=z^4-2z^2-1$. Combien de zéros ce polynôme a-t-il ? Au lieu de déterminer les zéros à la main, on va laisser notre programme le faire... puisque c'est justement l'utilité de la méthode de Newton. Modifiez le programme pour découvrir les zéros au fil du parcours de la grille. Retracez une carte des bassins de convergence pour ce nouveau polynôme. Avons-nous toujours convergence (quelque soit \inline{max_it}) partout ?\\
