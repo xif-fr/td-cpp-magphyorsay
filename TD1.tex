@@ -471,6 +471,34 @@ fonctions mathématiques qu'on pourra naturellement encapsuler dans un espace
 \texttt{math} afin d'éviter d'éventuel conflit de nom.
 \end{correction}
 
+%----------------------------------------------------------------
+
+\section{Nombres à virgule flottante}
+
+Testez le code suivant :
+\begin{minted}[breaklines]{c++}
+#include <iostream>
+
+int main()
+{
+  double a = 0.1, b = 0.2, c = 0.3;
+  if (a + b == c) 
+    std::cout << a + b << " est égal à " << c << std::endl;
+  else
+    std::cout << a + b << " n'est pas égal à " << c << std::endl;
+
+  return 0;
+}
+\end{minted}
+
+Que se passe-t-il ? (Piste d'explication : ajoutez \inline{std::cout.precision(19); std::cout.setf(std::ios::fixed);} au début du programme).
+
+Essayez avec \inline{a = 0.1, b = -0.1, c = 0.0}.
+
+Est-ce spécifique au C++ ?
+
+%----------------------------------------------------------------
+
 \section{Déclaration de fonctions}
 
 Déclarer puis définir une fonction \inline{affiche_complexe} qui prend en arguments la partie réelle et la partie imaginaire d'un nombre complexe et qui affiche le nombre complexe sous forme "$a+\mathrm{i}b$" dans la console. Afficher en notation scientifique avec 2 chiffres après la virgule en utilisant \inline{std::scientific} et \inline{std::ios_base::precision} (on trouvera un exemple \href{https://cplusplus.com/reference/ios/ios_base/precision/}{ici}).
@@ -628,9 +656,21 @@ Valeur pointée par le pointeur = 42
 
 \section{Passage par valeur, référence et adresse} \label{ex:exp}
 
-Pouvoir calculer l'exponentielle d'un nombre complexe est extrêmement utile, pour, par exemple, calculer une transformée de Fourier. Écrire 3 fonctions \inline{exponentielle_par_valeur}, \inline{exponentielle_par_reference} et \inline{exponentielle_par_adresse} qui ont 4 arguments : les deux premiers sont la partie réelle et imaginaire du nombre dont on souhaite calculer l'exponentielle, et les deux derniers sont la partie réelle et imaginaire du résultat. On dit que l'on fait un \textit{retour par argument} (en pratique en C++, on ne fait presque plus jamais comme ça...).
+Pouvoir calculer l'exponentielle d'un nombre complexe est utile, pour, par exemple, calculer une transformée de Fourier. Écrire 3 fonctions \inline{exponentielle_par_valeur}, \inline{exponentielle_par_reference} et \inline{exponentielle_par_adresse} qui ont 4 arguments : les deux premiers sont la partie réelle et imaginaire du nombre dont on souhaite calculer l'exponentielle, et les deux derniers sont la partie réelle et imaginaire du résultat. On dit que l'on fait un \textit{retour par argument} (en pratique en C++, on ne fait presque plus jamais comme ça...).
 
-La fonction \inline{exponentielle_par_valeur} passera ses deux derniers arguments par valeur (ie. \inline{double re_result, double im_result}), tandis que la fonction \inline{exponentielle_par_reference} les passera par référence (ie. \inline{double & re_result, double & im_result}) et la fonction \inline{exponentielle_par_adresse} les passera par adresse (ie. \inline{double * re_result, double * im_result}). Tester les 3 différentes méthodes. Pourquoi \inline{exponentielle_par_valeur} ne donne pas le résultat attendu ? Pour la suite des exercices, on utilisera uniquement \inline{exponentielle_par_reference}, que l'on renommera en \inline{exponentielle}.
+La fonction \inline{exponentielle_par_valeur} passera ses deux derniers arguments par valeur :
+\begin{minted}[breaklines]{c++}
+  double re_result, double im_result
+\end{minted}
+tandis que la fonction \inline{exponentielle_par_reference} les passera par référence :
+\begin{minted}[breaklines]{c++}
+  double& re_result, double& im_result
+\end{minted}
+et la fonction \inline{exponentielle_par_adresse} les passera par adresse :
+\begin{minted}[breaklines]{c++}
+  double* re_result, double* im_result
+\end{minted}
+Tester les 3 différentes méthodes. Pourquoi \inline{exponentielle_par_valeur} ne donne pas le résultat attendu ? Pour la suite des exercices, on utilisera uniquement \inline{exponentielle_par_reference}, que l'on renommera en \inline{exponentielle}.
 
 \begin{correction}
 L'énoncé demande de déclarer les fonctions suivantes:
@@ -690,10 +730,11 @@ int main()
 Le passage par valeur ne donne pas le bon résultat car les variables à l'intérieur de \mintinline[breaklines,breakafter=_]{c++}{exponentielle_par_valeur} contiennent seulement des copies des valeurs passées à la fonction. Donc dans la fonction \mintinline[breaklines,breakafter=_]{c++}{exponentielle_par_valeur}, \inline{re_result} contient 0 (qui est la valeur de \inline{a1} au moment de l'appel de la fonction), mais la modification de \inline{re_result} n'a aucun effet sur  \inline{a1}. Dans la fonction \mintinline[breaklines,breakafter=_]{c++}{exponentielle_par_reference}, \inline{re_result} est en fait \inline{a2}, donc modifier \inline{re_result} revient de fait à modifier directement \inline{a2}.
 \end{correction}
 
+On vera par la suite comment, en C++, on retourne un tuple de deux valeurs plutôt que de faire un retour par arguments.
+
 \section{Opérateurs \texttt{new} et \texttt{delete}}
 
-Écrire en \cpp, en utilisant les outils spécifiques à ce langage, les
-instructions C suivantes :
+Écrire en \cpp, en utilisant les outils spécifiques à ce langage, les instructions C suivantes :
 
 \begin{minted}[fontsize=\footnotesize,samepage,mathescape,xrightmargin=0.5cm,xleftmargin=0.5cm]{c++}
 double * pt_tabular;
@@ -775,6 +816,8 @@ On pourra noter que les variables \inline{re[n]} et \inline{im[n]} sont passées
 
 On remarquera aussi que les variables sont déclarées le plus proche possible de leur utilisation (en particulier, les variables \inline{unsigned int n} sont déclarées dans la boucle \inline{for}). 
 \end{correction}
+
+En pratique, en C++, on évitera d'écrire ce genre de code avec une allocation manuelle de mémoire. On écrira des objets dédiés, ou on utilisera les objets existants dans la bibliothèque standard.
 
 %-----------------------------------------------
 
