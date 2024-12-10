@@ -318,6 +318,7 @@ Nous voulons créer une classe \inline{Réseau} matéralisant un réseau en deux
 Le hamiltonien du modèle d'Ising étant local (voir la section suivante), la seule chose qui nous intéresse réellement est d'accéder aux \emph{voisins} d'un site, sans se soucier de ses coordonnées précises. C'est en cela que la classe pour un réseau carré va différer d'une simple matrice. Il s'agit, en quelque sorte, d'invisibiliser la structure précise du réseau à l'algorithme l'utilisant.\\
 
 \subsection{Écriture de la classe \inline{Réseau}}
+\emph{Il est conseillé de lire l'énoncé de toute cette section en entier avant de commencer l'écriture du code. Cette classe peut sembler intimidante à écrire, mais en s'y prennant bien, \filename{reseau.h} et \filename{reseau.cpp} peuvent avoir une taille de l'ordre de 60 lignes de code seulement chacun, commentaires inclus. Une heure devrait suffire.}\\
 
 Comme dans l'exemple de la classe \inline{Matrice} présenté en cours, nous allons "aplatir" la matrice en un tableau 1D, car c'est plus performant que de faire des tableaux de tableaux, et car cela se généralise mieux à un réseau quelconque. Une position $(x,y)$ sera alors encodée par l'indice $i = x + n_x \times y$ (ou $i' = n_y \times x + y$ si l'on préfère) :
 \begin{equation*}
@@ -338,7 +339,9 @@ class Site {
 \end{minted}
 Ceci est pour un réseau carré, et les plus courageux feront le reste du TD avec un réseau hexagonal (ou plus exactement \emph{en nid d'abeille}) pour pimenter l'exercice\footnote{Le réseau hexagonal est plus compliqué à implémenter car bipartite (ce n'est pas un réseau de Bravais). Dans ce réseau, chaque site est relié à 3 voisins contrairement à 4 pour un réseau carré ou à 6 pour un réseau triangulaire. Une façon de faire est de stocker les deux réseaux de Bravais de façon interlacée, et de spécifier, en plus de \inline{x} et \inline{y}, sur quel sous-réseau de Bravais le site est situé, et donc introduire une 3è coordonnée (\inline{a} par exemple, qui vaudra \inline{true} ou \inline{false}).}. Pour un niveau de difficulté intermédiaire, on pourra tenter un réseau triangulaire\footnote{Qui, lui, est un réseau de Bravais et peut être représenté comme une matrice, comme le réseau carré. Dans le réseau triangulaire, chaque site interragit avec 6 sites voisins.}.
 
-Comme \inline{_index}, \inline{_x} et \inline{_y} sont gérés et synchronisés par la classe \inline{Réseau} uniquement, et que l'utilisateur n'a pas à trifouiller ces données internes, nous allons les déclarer \inline{private}. En contrepartie, il faudra autoriser la classe \inline{Réseau} à y accéder. Une solution adaptée est d'utiliser une notion qui n'a pas été vue en cours : les classes et fonctions amies. Pour faire court, si la classe \inline{Site} déclare \inline{Réseau} comme classe amie, ses attributs privés seront accessibles dans les méthodes de \inline{Réseau}. Il faut utiliser le mot-clé \inline{friend} pour cela :
+Ici, nous utilisons la classe \inline{Site} comme un simple tuple, et nous choisissons de mettre toute la logique de traduction entre $(x,y)$ et $i$ dans la classe \inline{Réseau}.\footnote{On pourrait faire l'inverse, et mettre des méthodes de synchronisation comme pour la classe \inline{complexe} ci-dessus. Mais en terme de performance, il est plus simple de faire comme ci-dessous.}
+
+Comme \inline{_index}, \inline{_x} et \inline{_y} seront gérés et synchronisés par la classe \inline{Réseau} uniquement, et que l'utilisateur n'a pas à trifouiller ces données internes, nous allons les déclarer \inline{private}. On parle de type \emph{opaque}. En contrepartie, il faudra autoriser la classe \inline{Réseau} à y accéder. Une solution adaptée est d'utiliser une notion qui n'a pas été vue en cours : les classes et fonctions amies. Pour faire court, si la classe \inline{Site} déclare \inline{Réseau} comme classe amie, ses attributs privés seront accessibles dans les méthodes de \inline{Réseau}. Il faut utiliser le mot-clé \inline{friend} pour cela :
 \begin{minted}[breaklines]{c++}
 class Site {
 private:
@@ -350,16 +353,20 @@ private:
 
   Site (int i, int x, int y) : _index(i), _x(x), _y(y) {}
   Site () = default;
+
+public:
+  int x () const { return _x; }
+  int y () const { return _y; }
 };
 \end{minted}
-Nous avons au passage ajouté deux constructeurs, ce qui est nécessaire dès que l'on a des attributs privés. Pour faire plus propre, on pourra déclarer cette classe au sein de la classe \inline{Réseau}.\\
+Nous avons au passage ajouté deux constructeurs, ce qui est nécessaire dès lors que l'on a des attributs privés, ainsi que deux accesseurs \inline{x()} et \inline{y()}. Aucune autre méthode que ces constructeurs et accesseurs n'est nécessaires. Le type \inline{Site} est tellement simple qu'il n'y a pas besoin de créer une paire \filename{.h}/\filename{.cpp} associée. N'hésitez pas à ajouter un opérateur de flux pour afficher les coordonnées d'un site\footnote{Par exemple: \inline{std::ostream& operator<< (std::ostream& out, const Site& s) { out << "(" << s.x() << "," << s.y() << ")"; return out; }}}.\\
 
-À partir de ce type, écrire une classe \inline{Réseau} en vous inspirant de la classe \inline{Matrice} vue en cours pour le stockage de données (allocation dynamique au lieu d'utiliser \inline{std::vector})\footnote{Bien sûr, dans la vraie vie, on ne s'embête pas à faire cette allocation manuelle, on utilisera les types automatiques déjà présent dans la bibliothèque standard.}. Notre matrice sera de type \inline{int8_t}, qui est le plus petit entier signé possible\footnote{C'est en fait équivalent à un \inline{char}. Si vous essayez d'affichez la valeur de votre pointeur vers la zone mémoire stockée avec \inline{std::cout}, vous passez donc un \inline{char*}, qui sera interprété comme une chaine de caractère... ce qui n'est pas ce que l'on veut. Il faut alors convertir en, par exemple, un \inline{void*}. On écrira alors \inline{cout << (void*)data;}}. Les tailles $n_x$ et $n_y$ seront stockées sous forme de constantes. Écrivez un constructeur \inline{Réseau (int nx, int ny, int8_t valeur_def)}, ainsi qu'un destructeur et un constructeur par copie. Bien sûr, testez votre code en créant une matrice, puis en la copiant. On pourra rajouter temporairement un affichage de l'adresse de l'objet courant ainsi que l'adresse de la zone mémoire allouée, pour être certain que l'on fait correctement les choses.\\
+Nous allons maitenant écrire une classe \inline{Réseau} en s'inspirant de la classe \inline{Matrice} vue en cours pour le stockage de données (allocation dynamique au lieu d'utiliser \inline{std::vector})\footnote{Bien sûr, dans la vraie vie, on ne s'embête pas à faire cette allocation manuelle, on utilisera les types automatiques déjà présent dans la bibliothèque standard.}. Notre matrice sera de type \inline{int8_t}, qui est le plus petit entier signé possible\footnote{C'est en fait équivalent à un \inline{char}. Si vous essayez d'affichez la valeur de votre pointeur vers la zone mémoire stockée avec \inline{std::cout}, vous passez donc un \inline{char*}, qui sera interprété comme une chaine de caractère... ce qui n'est pas ce que l'on veut. Il faut alors convertir en, par exemple, un \inline{void*}. On écrira alors \inline{cout << (void*)data;}. De même, si vous voulez afficher directement un \inline{int8_t} avec \inline{std::cout}, ça ne va pas fonctionner car il va l'interpréter comme un caractère et non un entier. On écrira alors \inline{cout << (int)data[i];}. Pour utiliser les types comme \inline{intN_t}, il vous faudra sans doute inclure \inline{stdint.h}.}. Les tailles $n_x$ et $n_y$ seront stockées sous forme de constantes. Écrivez un constructeur \inline{Réseau (int nx, int ny, int8_t valeur_def)}, ainsi qu'un destructeur et un constructeur par copie. Bien sûr, testez votre code en créant une matrice, puis en la copiant. On pourra rajouter temporairement un affichage de l'adresse de l'objet courant ainsi que l'adresse de la zone mémoire allouée, pour être certain que l'on fait correctement les choses.\\
 
-Une fois cette base écrite, on aura deux méthodes dans la classe \inline{Réseau} pour générer un objet de type \inline{Site} :
+Une fois cette base écrite, créez deux méthodes dans la classe \inline{Réseau} pour générer un objet de type \inline{Site} :
 \begin{itemize}
-  \item Une méthode privée "\inline{Site site_index (int index) const;}" prenant en argument l'indice $i$ et déduisant $x$ et $y$ (privée car l'utilisateur de la classe n'a que faire de cet indiçage interne)
-  \item Une méthode publique "\inline{Site site_xy (int x, int y) const;}" prenant en argument $x$ et $y$ et déduisant $i$. Les conditions limites périodiques seront implémentés ici, et ramènera systématiquement $x$ et $y$ dans $\llbracket 0,n_x\!-\!1 \rrbracket$ et $\llbracket 0,n_y\!-\!1\rrbracket$ respectivement\footnote{Attention, le modulo \texttt{\%n} appliqué sur un entier signé ramène l'entier dans $\rrbracket-n,n\llbracket$, au plus proche de zéro, ce qui n'est pas pratique pour nous. Un façon perfomante de faire est d'ajouter $n$ au résultat du modulo si celui-ci est négatif.}.
+  \item Une méthode privée "\inline{Site site_index (int index) const;}" prenant en argument l'indice $i$ et déduisant $x$ et $y$ (privée car l'utilisateur de la classe n'a que faire de cet indiçage interne, et constante car il n'y a pas modification de l'objet).
+  \item Une méthode publique "\inline{Site site_xy (int x, int y) const;}" prenant en argument $x$ et $y$ et déduisant $i$. Les conditions limites périodiques seront implémentés ici, et on ramènera systématiquement $x$ et $y$ dans $\llbracket 0,n_x\!-\!1 \rrbracket$ et $\llbracket 0,n_y\!-\!1\rrbracket$ respectivement\footnote{Attention, le modulo \texttt{\%n} appliqué sur un entier signé ramène l'entier dans $\rrbracket-n,n\llbracket$, au plus proche de zéro, ce qui n'est pas pratique pour nous. Un façon perfomante de faire est d'ajouter $n$ au résultat du modulo si celui-ci est négatif.}.
 \end{itemize}
 On écrira aussi une méthode \inline{Site site_aleatoire () const;} renvoyant un site aléatoire du réseau.\\
 
@@ -369,11 +376,10 @@ Site s = mon_reseau.site_xy(7,15);
 cout << mon_reseau[s] << endl; // lecture de la valeur du site (7,15)
 mon_reseau[s] = 4; // modification de la valeur du site (7,15), rendu possible car une référence int8_t& est renvoyée
 \end{minted}
-Optionnellement, on pourra déclarer \inline{int8_t& operator[] (int x, int y);} pour que l'utilisateur puisse accéder directement à un site $(x,y)$ sans avoir à écrire \inline{mon_reseau[mon_reseau.site_xy(x,y)] = ...} (peut nécessiter l'option de compilation \texttt{-std=c++2b}).\\
+Optionnellement, on pourra déclarer \inline{int8_t& operator[] (int x, int y);} pour que l'utilisateur puisse accéder directement à un site $(x,y)$ sans avoir à écrire "\inline{mon_reseau[mon_reseau.site_xy(x,y)]}". Attention, l'opérateur \inline{[]} à plusieurs arguments n'existe que depuis le C++23, et il faut donc un compilateur suffisemment récent\footnote{GCC 12 ou clang 15, cf. \url{https://en.cppreference.com/w/cpp/compiler_support/23}. Peut nécessiter l'option de compilation \texttt{-std=c++2b} ou \texttt{-std=c++23}.}.\\
 
-Enfin, écrire une méthode \inline{std::array<Site,4> voisins (Site s) const;} qui renvoit les 4 voisins d'un site \inline{s} (ou les 3 voisins pour un réseau hexagonal, ou les 6 voisins pour un réseau triangulaire). On notera l'utilisation de \inline{std::array<Type,N>}\footnote{Présent dans le header \texttt{<array>}}, qui n'est rien d'autre qu'un tableau de taille fixe \inline{N} glorifié, mais plus pratique car permettant, par exemple, d'utiliser les boucles "for in" et de connaître sa taille avec \inline{.size()}. Il peut être initialisé ainsi : \inline{std::array<int,3> tab = { 42, 41, 40 };}. Bien sûr, aidez vous des méthodes déclarées précédemment.\\
+Enfin, écrire une méthode \inline{std::array<Site,4> voisins (Site s) const;} qui renvoit les 4 voisins d'un site \inline{s} (ou les 3 voisins pour un réseau hexagonal, ou les 6 voisins pour un réseau triangulaire). On notera l'utilisation de \inline{std::array<Type,N>}\footnote{Présent dans le header \texttt{<array>}}, qui n'est rien d'autre qu'un tableau de taille fixe \inline{N} glorifié, mais plus pratique car permettant, par exemple, d'utiliser les boucles "for in" et de connaître sa taille avec \inline{.size()}. Il peut être initialisé ainsi : \inline{std::array<int,3> tab = { 42, 41, 40 };}. Bien sûr, aidez vous des méthodes déclarées précédemment. Testez cette méthode en demandant les voisins d'un site situé au milieu, ainsi que les voisins d'un site suité au bord du réseau.\\
 
-Cette classe peut sembler intimidante à écrire, mais en s'y prennant bien, \filename{reseau.h} et \filename{reseau.cpp} peuvent avoir une taille de l'ordre de 60 lignes de code seulement chacun, commentaires inclus.
 \begin{correction}
 \subsubsection*{Déclaration : fichier \filename{reseau\_carre.h}}
 
@@ -423,8 +429,8 @@ public:
   Site site_aleatoire () const;
 
   // Accès à la valeur d'un site
-  int8_t operator[] (Site) const;
-  int8_t& operator[] (Site);
+  int8_t operator[] (Site) const; // Accès par valeur sans modification possible
+  int8_t& operator[] (Site); // Accès par référence, avec modification possible
 
   // Lite des sites directement voisins d'un site `s`
   std::array<Site,4> voisins (Site s) const;
@@ -449,11 +455,13 @@ Notons que contrairement à ce que l'énnoncé demande, nous n'avons pas implém
 
 /* Construction et destruction */
 
-Réseau::Réseau (int nx, int ny) : nx(nx), ny(ny), ntot(nx*ny) {
+Réseau::Réseau (int nx, int ny) : nx(nx), ny(ny), ntot(nx*ny), data(nullptr) {
   data = new int8_t[nx*ny];
+  // note : il est nécessaire d'utiliser une initializer list ici, car nx, ny et ntot sont constants
 }
 
 Réseau::Réseau (int nx, int ny, int8_t valeur_def) : Réseau(nx,ny) {
+  // ici, le constructeur ci-dessus et appelé par ce constructeur
   for (int i = 0; i < ntot; i++)
     data[i] = valeur_def;
 }
@@ -516,7 +524,7 @@ La solution est fournie dans les fichiers \filename{TD3/reseau\_hexa.h} et \file
 
 \subsubsection*{Itérateurs}
 
-Notons que dans les classes \filename{reseau\_carré.h}:\inline{Réseau} et \filename{reseau\_hexa.h}:\inline{Réseau} des fichiers de correction, on s'est permis de rajouter un élément permettant de passer d'un réseau à l'autre sans aucune modification du reste du code : un itérateur sur les sites du réseau. Il est en effet nécessaire de parcourir l'ensemble du réseau parfois (par exemple pour l'initialisation ou le calcul des observables dans la suite du TD). Un parcours utilisant les coordonnées $(x,y)$ dépendrait nécessairement du type du réseau. Pour s'abstraire des coordonnées, on laisse la classe faire le parcours elle-même. L'utilisateur utilise alors l'itérateur et son \inline{operator++} pour avancer d'un site. Cela permet d'écrire des range-based loop, comme ceci :
+Notons que dans les classes \filename{reseau\_carré.h}:\inline{Réseau} et \filename{reseau\_hexa.h}:\inline{Réseau} des fichiers de correction, on s'est permis de rajouter un élément permettant de passer d'un type de réseau à l'autre sans aucune modification du reste du code : un itérateur sur les sites du réseau. Il est en effet nécessaire de parcourir l'ensemble du réseau parfois (par exemple pour l'initialisation ou le calcul des observables dans la suite du TD). Un parcours utilisant les coordonnées $(x,y)$ dépendrait nécessairement du type du réseau. Pour s'abstraire des coordonnées, on laisse la classe faire le parcours elle-même. L'utilisateur utilise alors l'itérateur et son \inline{operator++} pour avancer d'un site. Cela permet d'écrire des range-based loop, comme ceci :
 \begin{minted}[]{c++}
 for (Site i : S) {
   faire_quelque_chose_avec S[i];
@@ -663,6 +671,7 @@ int main () {
   Site i = S.site_xy(0,0);
   for (Site j : S.voisins(i))
     std::cout << "(" << j.x() << "," << j.y() << ")" << std::endl;
+    // ou simplement `std::cout << j << std::endl;` en utilisant l'opérateur de flux suggéré
 
   return 0;
 }
